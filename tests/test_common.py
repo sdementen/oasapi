@@ -17,12 +17,12 @@ paths:
       parameters:
       - name: param1
         in: body
-        schema: 
+        schema:
           type: object
           properties:
             operationId:
               example: this-is-not-an-operation-id
-            security: 
+            security:
               example: this-is-not-a-security
             parameters:
               example: this-is-not-a-parameters
@@ -55,7 +55,7 @@ def test_find_keys_security():
     assert list(results) == [([], ()), ([], ("paths", "/foo", "get"))]
 
 
-def test_find_keys_security():
+def test_find_keys_parameters():
     results = find_keys(swagger_find_keys, "parameters")
 
     assert list(results) == [
@@ -109,7 +109,7 @@ definitions:
       prop1:
         $ref: "#/definitions/some-other-definition"
   some-other-definition: {}
-  some-orphan-definition: 
+  some-orphan-definition:
     type: "object"
     properties:
       prop1:
@@ -141,10 +141,10 @@ def test_extract_references():
     }
 
 
-
 def test_commonprefix_empty():
     result = commonprefix([])
     assert result == ""
+
 
 def test_commonprefix_nocommon():
     swagger = yaml.load(

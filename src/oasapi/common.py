@@ -13,8 +13,8 @@ KEY_VALIDATION = {
     "parameters": lambda path: (not path) or (path[0] == "paths" and 2 <= len(path) <= 3),
     "$ref": lambda path: True,
     "operationId": lambda path: len(path) == 3
-                                and path[0] == "paths"
-                                and OPERATIONS_RE.match(path[2]),
+    and path[0] == "paths"
+    and OPERATIONS_RE.match(path[2]),
 }
 
 
@@ -61,6 +61,3 @@ def commonprefix(m):
             break
 
     return "/".join(s)
-
-
-

@@ -30,7 +30,9 @@ def cli():
 
 
 @cli.command(name="validate")
-@click.argument('swagger', type=click.Path(exists=True, dir_okay=False, resolve_path=True, allow_dash=True))
+@click.argument(
+    "swagger", type=click.Path(exists=True, dir_okay=False, resolve_path=True, allow_dash=True)
+)
 def validate(swagger: str):
     """Validate the SWAGGER file.
 
@@ -46,9 +48,16 @@ def validate(swagger: str):
     errors = oasapi.validate_swagger(swagger)
     if errors:
         # display error messages and exit with code = 1
-        click.echo(click.style("The swagger is not valid. Following errors have been detected:", fg="red"))
-        for error in sorted(errors,key=lambda error:str(error)):
-            click.echo(click.style(f"- {error.type} @ '{error.format_path(error.path)}' -> {error.reason}", fg="red"))
+        click.echo(
+            click.style("The swagger is not valid. Following errors have been detected:", fg="red")
+        )
+        for error in sorted(errors, key=lambda error: str(error)):
+            click.echo(
+                click.style(
+                    f"- {error.type} @ '{error.format_path(error.path)}' -> {error.reason}",
+                    fg="red",
+                )
+            )
         sys.exit(1)
     else:
         # informs everything OK

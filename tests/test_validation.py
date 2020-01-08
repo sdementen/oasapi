@@ -217,7 +217,7 @@ securityDefinitions:
     type: oauth2
     flow: implicit
     authorizationUrl: https://some-existing-auth-server.com
-    scopes: 
+    scopes:
       existing-scope: this is an existing scope
 """
     swagger = yaml.load(swagger_str)

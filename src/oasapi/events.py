@@ -157,7 +157,6 @@ class JsonSchemaValidationError(ValidationError):
     type: str = "Json schema validator error"
 
 
-
 @dataclass(frozen=True)
 class BasePathValidationAction(ValidationAction):
     old_path: str

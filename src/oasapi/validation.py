@@ -17,7 +17,8 @@ from .events import (
     OAuth2ScopeNotFoundInSecurityDefinitionValidationError,
     DuplicateOperationIdValidationError,
     JsonSchemaValidationError,
-    ValidationError)
+    ValidationError,
+)
 
 
 def check_security(swagger):
