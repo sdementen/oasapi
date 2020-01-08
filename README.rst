@@ -72,7 +72,7 @@ Free software license: BSD 3-Clause License
 Quickstart
 ==========
 
-Install oasapi from PyPI::
+Install oasapi from PyPI with::
 
     pip install oasapi
 
@@ -81,11 +81,11 @@ You can also install the in-development version with::
     pip install https://github.com/sdementen/oasapi/archive/master.zip
 
 
-Validate an OAS 2.0 Document::
+Validate an OAS 2.0 Document with::
 
     python -m oasapi validate path-to-a-swagger.json
 
-or simply::
+or if you prefer with::
 
     oasapi validate path-to-a-swagger.json
 
