@@ -105,7 +105,6 @@ To build the documentation locally (available in the folder ``docs/dist``, entry
     ' activate your .env virtualenv
     tox -e docs
 
-
 To recreate the tox environments (e.g. if you add a dependency in the setup.py)::
 
     tox --recreate
@@ -149,3 +148,5 @@ To upload on PyPI::
 
     python -m twine upload dist/*
 
+For the setup of the deploy to PyPI step on Travis, the information on https://docs.travis-ci.com/user/deployment/pypi/
+(with the online encrypt tool on https://travis-encrypt.github.io/) were useful.
