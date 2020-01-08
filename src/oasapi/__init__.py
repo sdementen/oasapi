@@ -1,4 +1,4 @@
-__version__ = "0.1.2"
+__version__ = "__version__ = '0.1.3'"
 
 from .validation import validate_swagger
 
