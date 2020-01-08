@@ -2,15 +2,14 @@
 
 see https://github.com/swagger-api/swagger-editor/tree/master/src/plugins/validate-semantic
 for semantic rules (i.e. beyond teh JSONSchema validation of the swagger)"""
+import json
 from itertools import groupby
 from pathlib import Path
-
-# import simplejson as json
-import json
 from typing import Set
 
 from jsonschema import Draft4Validator
 
+from .common import extract_references, find_keys
 from .events import (
     ReferenceNotFoundValidationError,
     ParameterDefinitionValidationError,
@@ -19,7 +18,6 @@ from .events import (
     DuplicateOperationIdValidationError,
     JsonSchemaValidationError,
     ValidationError)
-from .common import extract_references, find_keys, OPERATIONS_RE
 
 
 def check_security(swagger):
@@ -146,13 +144,16 @@ def detect_duplicate_operationId(swagger):
         pths = tuple(subpth for _, subpth in key_pths)
 
         if len(pths) > 1:
-            events.add(
-                DuplicateOperationIdValidationError(
-                    path=pths,
-                    reason=f"the operationId '{opId}' is used in more than one endpoint",
-                    operationId=opId,
+            pth_first, *pths = pths
+            for pth in pths:
+                events.add(
+                    DuplicateOperationIdValidationError(
+                        path=pth,
+                        path_first_used=pth_first,
+                        reason=f"the operationId '{opId}' is already used in an endpoint",
+                        operationId=opId,
+                    )
                 )
-            )
 
     return events
 

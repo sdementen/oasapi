@@ -6,7 +6,8 @@ from oasapi.events import (
     DuplicateOperationIdValidationError,
     ParameterDefinitionValidationError,
     SecurityDefinitionNotFoundValidationError,
-    OAuth2ScopeNotFoundInSecurityDefinitionValidationError)
+    OAuth2ScopeNotFoundInSecurityDefinitionValidationError,
+)
 from oasapi.validation import (
     validate_swagger,
     check_references,
@@ -117,9 +118,10 @@ paths:
     results = detect_duplicate_operationId(swagger)
     assert results == {
         DuplicateOperationIdValidationError(
-            path=(("paths", "/foo", "post"), ("paths", "/foo", "put")),
-            reason="the operationId 'this-is-not-a-unique-id' is used in more than one endpoint",
+            path=("paths", "/foo", "put"),
+            reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint",
             operationId="this-is-not-a-unique-id",
+            path_first_used=("paths", "/foo", "post"),
             type="Duplicate operationId",
         )
     }

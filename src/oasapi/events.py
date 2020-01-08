@@ -8,6 +8,10 @@ class Event:
     path: Iterable[Union[str, Iterable[str]]]
     reason: str
 
+    @staticmethod
+    def format_path(pth):
+        return "$[" + "][".join(map(repr, pth)) + "]"
+
 
 @dataclass(frozen=True)
 class Action(Event):
@@ -144,6 +148,7 @@ class OAuth2ScopeNotFoundInSecurityDefinitionValidationError(ValidationError):
 @dataclass(frozen=True)
 class DuplicateOperationIdValidationError(ValidationError):
     operationId: str
+    path_first_used: Iterable[Union[str, Iterable[str]]]
     type: str = "Duplicate operationId"
 
 

@@ -46,9 +46,9 @@ def validate(swagger: str):
     errors = oasapi.validate_swagger(swagger)
     if errors:
         # display error messages and exit with code = 1
-        click.echo(click.style("The swagger is not valid. Following errors have been detected", fg="red"))
-        for error in errors:
-            click.echo(click.style(f"{error.type} @ 'root/{'/'.join(error.path)}' -> {error.reason}", fg="red"))
+        click.echo(click.style("The swagger is not valid. Following errors have been detected:", fg="red"))
+        for error in sorted(errors,key=lambda error:str(error)):
+            click.echo(click.style(f"- {error.type} @ '{error.format_path(error.path)}' -> {error.reason}", fg="red"))
         sys.exit(1)
     else:
         # informs everything OK
