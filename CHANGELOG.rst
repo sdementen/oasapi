@@ -2,6 +2,12 @@
 Changelog
 =========
 
+
+0.1.1 (2019-01-08)
+------------------
+
+* Add pyyaml dependencies (to support OAS in yaml format)
+
 0.1.0 (2019-01-08)
 ------------------
 

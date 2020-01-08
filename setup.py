@@ -73,7 +73,7 @@ setup(
     install_requires=[
         'click',
         'jsonschema',
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
+        'pyyaml',
     ],
     extras_require={
         # eg:
