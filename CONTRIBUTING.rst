@@ -86,8 +86,12 @@ To install a minimal virtual environment with tox (see https://docs.python.org/3
     cd path-to-your-oasapi-folder
     python -m venv .env
     ' activate your .env virtualenv
-    python -m pip install tox
+    python -m pip install -r requirements-dev.txt
 
+
+To install the git pre-commit scripts::
+
+    pre-commit install
 
 To run the tests locally::
 
