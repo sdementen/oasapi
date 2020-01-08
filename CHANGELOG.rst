@@ -3,6 +3,12 @@ Changelog
 =========
 
 
+0.1.5 (2019-01-08)
+------------------
+
+* Fix script form of the cli (``oasapi`` instead of ``python -m oasapi``)
+
+
 0.1.4 (2019-01-08)
 ------------------
 
