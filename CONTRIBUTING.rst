@@ -126,6 +126,11 @@ To run tox within PyCharm, right click on ``tox.ini`` and choose ``Run`` (see ht
 Tips to deploy (for the maintainers)
 ------------------------------------
 
+To bump the version::
+
+    ' update/commit first all your changes including the changelog
+    bump2version patch --tag --commit
+
 To build the source distribution::
 
     ' clean first the /dist folder
