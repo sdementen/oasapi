@@ -122,3 +122,21 @@ Tips with PyCharm
 -----------------
 
 To run tox within PyCharm, right click on ``tox.ini`` and choose ``Run`` (see https://www.jetbrains.com/help/pycharm/tox-support.html)
+
+Tips to deploy (for the maintainers)
+------------------------------------
+
+To build the source distribution::
+
+    ' clean first the /dist folder
+    python setup.py sdist
+
+
+To upload on PyPI Test::
+
+    python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+To upload on PyPI::
+
+    python -m twine upload dist/*
+
