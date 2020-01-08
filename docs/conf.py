@@ -21,7 +21,7 @@ project = 'The Open API Specifications Advanced Python Introspection library'
 year = '2019'
 author = 'Sebastien de Menten'
 copyright = '{0}, {1}'.format(year, author)
-version = release = '0.1.1'
+version = release = '0.1.2'
 
 pygments_style = 'trac'
 templates_path = ['.']
