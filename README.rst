@@ -59,14 +59,20 @@ Overview
 
 .. end-badges
 
-Python library for Web APIs leveraging OpenAPI/Swagger specification
+Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling:
 
-* Free software: BSD 3-Clause License
+ - validation of an OAS 2.0 document
+ - [todo] control backward compability between two OAS 2.0 documents
+ - [todo] rewriting the basePath and paths of an OAS 2.0 document
+ - [todo] filtering endpoints of an OAS 2.0 document to generate a subset of the API
+ - [todo] adding/removing securityDefinitions on an OAS 2.0 document
 
-Installation
-============
+Free software license: BSD 3-Clause License
 
-::
+Quickstart
+==========
+
+Install oasapi from PyPI::
 
     pip install oasapi
 
@@ -75,33 +81,21 @@ You can also install the in-development version with::
     pip install https://github.com/sdementen/oasapi/archive/master.zip
 
 
+Validate an OAS 2.0 Document::
+
+    python -m oasapi validate path-to-a-swagger.json
+
+or simply::
+
+    oasapi validate path-to-a-swagger.json
+
+
 Documentation
 =============
 
-
 https://oasapi.readthedocs.io/
-
 
 Development
 ===========
 
-To run the all tests run::
-
-    tox
-
-Note, to combine the coverage data from all the tox environments run:
-
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
-
-    - - Windows
-      - ::
-
-            set PYTEST_ADDOPTS=--cov-append
-            tox
-
-    - - Other
-      - ::
-
-            PYTEST_ADDOPTS=--cov-append tox
+https://oasapi.readthedocs.io/en/latest/contributing.html#development

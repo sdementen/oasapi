@@ -25,11 +25,11 @@ import oasapi
 
 
 @click.group()
-def cli():
+def main():
     pass
 
 
-@cli.command(name="validate")
+@main.command(name="validate")
 @click.argument(
     "swagger", type=click.Path(exists=True, dir_okay=False, resolve_path=True, allow_dash=True)
 )
