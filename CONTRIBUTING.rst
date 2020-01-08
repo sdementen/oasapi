@@ -99,7 +99,7 @@ To run the tests locally::
     ' activate your .env virtualenv
     tox
 
-To build the documentation locally (available in the folder ``dist/docs``, entry point ``dist/docs/index.html``)::
+To build the documentation locally (available in the folder ``docs/dist``, entry point ``docs/dist/index.html``)::
 
     cd path-to-your-oasapi-folder
     ' activate your .env virtualenv
