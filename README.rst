@@ -81,7 +81,7 @@ You can also install the in-development version with::
     pip install https://github.com/sdementen/oasapi/archive/master.zip
 
 
-Validate an OAS 2.0 Document with::
+Validate an OAS 2.0 Document (in JSON or YAML format) with::
 
     python -m oasapi validate path-to-a-swagger.json
 
