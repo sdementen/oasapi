@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='oasapi',
-    version='0.0.0',
+    version='0.1.0',
     license='BSD-3-Clause',
     description='Python library for Web APIs leveraging OpenAPI/Swagger specification',
     long_description='%s\n%s' % (

@@ -34,7 +34,7 @@ def cli():
 def validate(swagger: str):
     """Validate the SWAGGER file.
 
-    SWAGGER is the path to the swagger file"""
+    SWAGGER is the path to the swagger file, in json or yaml format."""
     file_content = Path(swagger).read_text()
     if file_content.startswith("{"):
         # this is a json file

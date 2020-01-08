@@ -1,4 +1,4 @@
 pytest
 pytest-cov
 pyyaml
-bumpversion
+bump2version
