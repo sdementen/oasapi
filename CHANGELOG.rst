@@ -3,6 +3,12 @@ Changelog
 =========
 
 
+0.1.2 (2019-01-08)
+------------------
+
+* Fix model & reporting of duplicate operationIds
+* Add documentation on the CLI Usage
+
 0.1.1 (2019-01-08)
 ------------------
 
