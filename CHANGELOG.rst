@@ -3,6 +3,12 @@ Changelog
 =========
 
 
+0.1.3 (2019-01-08)
+------------------
+
+* Add git pre-commit hooks for black and flake
+
+
 0.1.2 (2019-01-08)
 ------------------
 
