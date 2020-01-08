@@ -8,7 +8,7 @@ Why does this file exist, and why __main__? For more info, read:
 - https://docs.python.org/2/using/cmdline.html#cmdoption-m
 - https://docs.python.org/3/using/cmdline.html#cmdoption-m
 """
-from oasapi.cli import main
+from oasapi.cli import cli
 
 if __name__ == "__main__":
-    main()
+    cli()

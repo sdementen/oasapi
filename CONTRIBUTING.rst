@@ -81,6 +81,34 @@ For merging, you should:
 Tips
 ----
 
+To install a minimal virtual environment with tox (see https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments ) ::
+
+    cd path-to-your-oasapi-folder
+    python -m venv .env
+    ' activate your .env virtualenv
+    python -m pip install tox
+
+
+To run the tests locally::
+
+    cd path-to-your-oasapi-folder
+    ' activate your .env virtualenv
+    tox
+
+To build the documentation locally (available in the folder ``dist/docs``, entry point ``dist/docs/index.html``)::
+
+    cd path-to-your-oasapi-folder
+    ' activate your .env virtualenv
+    tox -e docs
+
+
+To recreate the tox environments (e.g. if you add a dependency in the setup.py)::
+
+    tox --recreate
+    tox --recreate -e py36              '(only the py36 environment)
+
+
+
 To run a subset of tests::
 
     tox -e envname -- pytest -k test_myfeature
@@ -88,3 +116,9 @@ To run a subset of tests::
 To run all the test environments in *parallel* (you need to ``pip install detox``)::
 
     detox
+
+
+Tips with PyCharm
+-----------------
+
+To run tox within PyCharm, right click on ``tox.ini`` and choose ``Run`` (see https://www.jetbrains.com/help/pycharm/tox-support.html)
