@@ -39,13 +39,22 @@ install:
 script:
   - tox -v
 deploy:
-  provider: pypi
-  user: "__token__"
-  password:
-    secure: "ttOhnjCCao9OnSMSS1/jd5Q4l8Z5l9PnJq5yS7fQ1NIkwPM/54AG0/JaEaUEUZR88l0pThApWjo5NYrIK/FuEkp/+ItjZyLpbshZKOjoHQCNrpCBPPl6mJu0mCFsuuzhTQNA0yRkNXOgxNxtyngyFEcGm6p+XQHHvtcwJMv5xje4QxLNJrHSc9YvubPPtsCBpvhaseOiSnYbwdN3VkBEv25AN2YfcVY3rOr8t9/sRYZA6WpVh85WuYx1Zb3D1YnrsT/DJUjANSs1XYTsi1liZo0lxsewc3wcj/KD7wEDNiQAbDVxbHE93K+IqpmmvUEioL8ujRO0Ar19CdlElNBDAGFw4hpbw1eA9nGtFsTZhiyq2j2CYuFjQ/uRt15eQFjOJLl9NrZi/d0mvdJckUvh7230Gj4jKjaIe0raNprsTWzBQ2BADXeBGC95+y88IkQT5s/erGAburhMUKpEZa2NqJgrPYZbiRdwPd8ymc1DkTe4MoT9TjHQ9T7tHImKHgWYQyCiU26PlL5D2uDxoXPfOLUTrHP1ODk4uuoFMANjm91+mtzd2g2wzyDvfmfB5ZCdA0intvGVJ6iylCLCNOaPqJKrz0I+DPmRWftgUhfigTE9tV3tAHjqLopdr/zF7E8GpD9sdt3+n7p4Po0qoVEbpHKBTQIWHeIlTb5wb/bTXu4="
-  on:
-    tags: true
-    condition: $TOXENV = py36,codecov
+   -  provider: pypi
+      user: "__token__"
+      password:
+        secure: "ttOhnjCCao9OnSMSS1/jd5Q4l8Z5l9PnJq5yS7fQ1NIkwPM/54AG0/JaEaUEUZR88l0pThApWjo5NYrIK/FuEkp/+ItjZyLpbshZKOjoHQCNrpCBPPl6mJu0mCFsuuzhTQNA0yRkNXOgxNxtyngyFEcGm6p+XQHHvtcwJMv5xje4QxLNJrHSc9YvubPPtsCBpvhaseOiSnYbwdN3VkBEv25AN2YfcVY3rOr8t9/sRYZA6WpVh85WuYx1Zb3D1YnrsT/DJUjANSs1XYTsi1liZo0lxsewc3wcj/KD7wEDNiQAbDVxbHE93K+IqpmmvUEioL8ujRO0Ar19CdlElNBDAGFw4hpbw1eA9nGtFsTZhiyq2j2CYuFjQ/uRt15eQFjOJLl9NrZi/d0mvdJckUvh7230Gj4jKjaIe0raNprsTWzBQ2BADXeBGC95+y88IkQT5s/erGAburhMUKpEZa2NqJgrPYZbiRdwPd8ymc1DkTe4MoT9TjHQ9T7tHImKHgWYQyCiU26PlL5D2uDxoXPfOLUTrHP1ODk4uuoFMANjm91+mtzd2g2wzyDvfmfB5ZCdA0intvGVJ6iylCLCNOaPqJKrz0I+DPmRWftgUhfigTE9tV3tAHjqLopdr/zF7E8GpD9sdt3+n7p4Po0qoVEbpHKBTQIWHeIlTb5wb/bTXu4="
+      on:
+        tags: true
+        condition: $TOXENV = py36,codecov
+   -  provider: script
+      script:
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - docker build -t oasapi .
+      - docker images
+      - docker tag oasapi $DOCKER_USERNAME/oasapi:latest
+      - docker push $DOCKER_USERNAME/oasapi
+      on:
+        condition: $TOXENV = py36,codecov
 after_failure:
   - more .tox/log/* | cat
   - more .tox/*/log/* | cat

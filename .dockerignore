@@ -1,0 +1,8 @@
+.*
+ci
+dist
+docs
+htmlcov
+tests
+**/__pycache__
+**/*.egg-info

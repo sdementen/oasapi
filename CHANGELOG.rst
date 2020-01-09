@@ -3,6 +3,13 @@ Changelog
 =========
 
 
+
+dev
+---
+
+* Add sdementen/oasapi docker image
+* Update doc on Docker image use and pipeing a swagger to oasapi
+
 0.1.7 (2019-01-09)
 ------------------
 
