@@ -4,10 +4,10 @@ Changelog
 
 
 
-dev
----
+0.1.8 (2019-01-09)
+------------------
 
-* Add sdementen/oasapi docker image
+* Push the sdementen/oasapi docker image to Docker Hub on each release
 * Update doc on Docker image use and pipeing a swagger to oasapi
 
 0.1.7 (2019-01-09)
