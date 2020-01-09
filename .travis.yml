@@ -48,11 +48,10 @@ deploy:
         condition: $TOXENV = py36,codecov
    -  provider: script
       script:
-      - echo "$DOCKER_USERNAME"
-      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
       - docker build -t oasapi .
       - docker images
       - docker tag oasapi $DOCKER_USERNAME/oasapi:latest
+      - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
       - docker push $DOCKER_USERNAME/oasapi
       on:
         condition: $TOXENV = py36,codecov
