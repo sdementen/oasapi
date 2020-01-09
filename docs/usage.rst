@@ -5,11 +5,11 @@ Usage
 Command line interface
 ----------------------
 
-oasapi offers a CLI to run core commands::
+oasapi offers a CLI to run core commands:
 
 .. command-output:: python -m oasapi
 
-Alternatively to the syntax hereabove, you can call oasapi through the oasapi script::
+Alternatively to the syntax hereabove, you can call oasapi through the oasapi script:
 
 .. command-output:: oasapi
 
