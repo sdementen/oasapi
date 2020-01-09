@@ -80,26 +80,26 @@ You can also install the in-development version with::
 
     pip install https://github.com/sdementen/oasapi/archive/master.zip
 
+Validate an OAS 2.0 Document (in JSON or YAML format) with::
 
-Validate an OAS 2.0 Document (in JSON or YAML format) with:
+    python -m oasapi validate samples/swagger_petstore.json
 
-.. command-output:: python -m oasapi validate samples/swagger_petstore.json
+or if you prefer with the oasapi script::
 
-or if you prefer with:
+    oasapi validate samples/swagger_petstore.json
 
-.. command-output:: oasapi validate samples/swagger_petstore.json
+or with the ``sdementen/oasapi`` Docker image (available on Docker Hub)::
 
-If you want to use docker, the `sdementen/oasapi` image is available on Docker Hub:
+    docker run sdementen/oasapi validate http://petstore.swagger.io/v2/swagger.json
 
-.. command-output:: docker run sdementen/oasapi validate http://petstore.swagger.io/v2/swagger.json
 
-If you have issues retrieving a swagger over http/https via oasapi (issues with proxy, certificate, ...), you
-can pipe the content to oasapi:
+You can also pipe a swagger to the command (if oasapi cannot retrieve the file by itself)::
 
-.. command-output:: curl -s http://petstore.swagger.io/v2/swagger.json | oasapi validate -
-   :shell:
-.. command-output:: curl -s http://petstore.swagger.io/v2/swagger.json | docker run -i sdementen/oasapi validate -
-   :shell:
+    type samples/swagger_petstore.json | oasapi validate -
+    type samples/swagger_petstore.json | docker run -i sdementen/oasapi validate -
+    curl http://petstore.swagger.io/v2/swagger.json | oasapi validate -
+    curl -s http://petstore.swagger.io/v2/swagger.json | docker run -i sdementen/oasapi validate -
+
 
 Documentation
 =============
