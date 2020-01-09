@@ -47,13 +47,23 @@ deploy:
         tags: true
         condition: $TOXENV = py36,codecov
    -  provider: script
-      script: >
+      script: >-
         docker build -t oasapi . &&
         docker images &&
         docker tag oasapi $DOCKER_USERNAME/oasapi:latest &&
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin &&
         docker push $DOCKER_USERNAME/oasapi
       on:
+        condition: $TOXENV = py36,codecov
+   -  provider: script
+      script: >-
+        docker build -t oasapi . &&
+        docker images &&
+        docker tag oasapi $DOCKER_USERNAME/oasapi:$TRAVIS_TAG &&
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin &&
+        docker push $DOCKER_USERNAME/oasapi
+      on:
+        tags: true
         condition: $TOXENV = py36,codecov
 after_failure:
   - more .tox/log/* | cat
