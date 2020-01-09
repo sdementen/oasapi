@@ -3,7 +3,7 @@ import yaml
 
 from oasapi.common import find_keys, extract_references, commonprefix
 
-swagger_find_keys = yaml.load(
+swagger_find_keys = yaml.safe_load(
     """
 swagger: '2.0'
 info:
@@ -85,7 +85,7 @@ def test_find_keys_not_supported_key():
         list(find_keys(swagger_find_keys, "paths"))
 
 
-swagger_extract_references = yaml.load(
+swagger_extract_references = yaml.safe_load(
     """
 swagger: '2.0'
 info:
@@ -147,7 +147,7 @@ def test_commonprefix_empty():
 
 
 def test_commonprefix_nocommon():
-    swagger = yaml.load(
+    swagger = yaml.safe_load(
         """
 swagger: '2.0'
 info:
@@ -168,7 +168,7 @@ paths:
 
 
 def test_commonprefix_1level_common():
-    swagger = yaml.load(
+    swagger = yaml.safe_load(
         """
 swagger: '2.0'
 info:
@@ -187,7 +187,7 @@ paths:
 
 
 def test_commonprefix_2levels_common():
-    swagger = yaml.load(
+    swagger = yaml.safe_load(
         """
 swagger: '2.0'
 info:
@@ -204,7 +204,7 @@ paths:
 
 
 def test_commonprefix_single_case():
-    swagger = yaml.load(
+    swagger = yaml.safe_load(
         """
 swagger: '2.0'
 info:

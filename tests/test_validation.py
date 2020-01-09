@@ -26,7 +26,7 @@ info:
   title: my api
 paths: {}
 """
-    swagger = yaml.load(swagger_str)
+    swagger = yaml.safe_load(swagger_str)
     results = validate_swagger(swagger)
 
     # no error in this basic test
@@ -59,7 +59,7 @@ info:
   title: my api
 paths: {}
 """
-    swagger = yaml.load(swagger_str)
+    swagger = yaml.safe_load(swagger_str)
     results = validate_swagger(swagger)
 
     # no error in this basic test
@@ -95,7 +95,7 @@ responses:
     description: OK
 
     """
-    swagger = yaml.load(swagger_str)
+    swagger = yaml.safe_load(swagger_str)
 
     results = check_references(swagger)
     assert results == {
@@ -131,7 +131,7 @@ paths:
         200:
           description: OK
     """
-    swagger = yaml.load(swagger_str)
+    swagger = yaml.safe_load(swagger_str)
 
     results = detect_duplicate_operationId(swagger)
     assert results == {
@@ -181,7 +181,7 @@ paths:
       type: string
       enum: [there, are, duplicates, duplicates]
 """
-    swagger = yaml.load(swagger_str)
+    swagger = yaml.safe_load(swagger_str)
 
     results = check_parameters(swagger)
     assert results == {
@@ -238,7 +238,7 @@ securityDefinitions:
     scopes:
       existing-scope: this is an existing scope
 """
-    swagger = yaml.load(swagger_str)
+    swagger = yaml.safe_load(swagger_str)
 
     results = check_security(swagger)
     assert results == {
