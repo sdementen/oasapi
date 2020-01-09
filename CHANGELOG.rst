@@ -3,6 +3,12 @@ Changelog
 =========
 
 
+0.1.7 (2019-01-09)
+------------------
+
+* Support URL and stdin (with -) as SWAGGER for the CLI
+
+
 0.1.6 (2019-01-08)
 ------------------
 

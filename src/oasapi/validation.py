@@ -137,7 +137,7 @@ def check_references(swagger):
 def detect_duplicate_operationId(swagger):
     """Return list of Action with duplicate operationIds"""
     # retrieve all operationIds
-    opIds = list(find_keys(swagger["paths"], "operationId", path=("paths",)))
+    opIds = list(find_keys(swagger.get("paths", {}), "operationId", path=("paths",)))
 
     events = set()
 

@@ -16,12 +16,28 @@ Why does this file exist, and why not put this in __main__?
 """
 import json
 import sys
-from pathlib import Path
+from urllib.error import URLError, HTTPError
+from urllib.request import urlopen
 
 import click
 import yaml
+from attr import dataclass
 
 import oasapi
+
+
+def shorten_text(txt, before, after, placeholder="..."):
+    """Shorthen a text to max before+len(placeholder)+after chars.
+
+    The new text will keep the before first characters and after last characters
+    """
+    # check if need to shorten
+    if len(txt) <= before + len(placeholder) + after:
+        # if not, return the original string
+        return txt
+    else:
+        # otherwise, keep the beginning and end of sentence and insert the placeholder
+        return txt[:before] + placeholder + txt[-after:]
 
 
 @click.group()
@@ -29,21 +45,62 @@ def main():
     pass
 
 
+@dataclass
+class FileURL:
+    url: str
+    content: str
+
+    @classmethod
+    def open_url(cls, ctx, param, value):
+        if value is not None:
+            try:
+                # try to open as if value is an URL
+                fp = urlopen(value)
+            except HTTPError as err:
+                raise click.ClickException(
+                    f"Error when downloading {value} : {err.reason} ({err.code})"
+                )
+            except (URLError, ValueError):
+                # it should be a file
+                path = click.File()
+                fp = path.convert(value=value, param=param, ctx=ctx)
+                if value == "-":
+                    value = "[stdin]"
+
+            # read the file
+            content = fp.read()
+
+            # convert to text if bytes assuming utf-8
+            if isinstance(content, bytes):
+                content = content.decode("utf-8")
+
+            return cls(url=value, content=content)
+
+
 @main.command(name="validate")
-@click.argument(
-    "swagger", type=click.Path(exists=True, dir_okay=False, resolve_path=True, allow_dash=True)
-)
-def validate(swagger: str):
+@click.argument("swagger_fileurl", callback=FileURL.open_url)
+def validate(swagger_fileurl: FileURL):
     """Validate the SWAGGER file.
 
-    SWAGGER is the path to the swagger file, in json or yaml format."""
-    file_content = Path(swagger).read_text()
+    SWAGGER is the path to the swagger file, in json or yaml format. It can be a file path, an URL or a dash (-) for the stdin"""
+    file_content = swagger_fileurl.content
     if file_content.startswith("{"):
         # this is a json file
-        swagger = json.loads(file_content)
+        try:
+            swagger = json.loads(file_content)
+        except json.JSONDecodeError:
+            swagger = None
     else:
         # this is a yaml file
-        swagger = yaml.safe_load(file_content)
+        try:
+            swagger = yaml.safe_load(file_content)
+        except yaml.YAMLError:
+            swagger = None
+
+    if swagger is None:
+        raise click.ClickException(
+            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' with content {shorten_text(swagger_fileurl.content,15,10)}"
+        )
 
     errors = oasapi.validate_swagger(swagger)
     if errors:

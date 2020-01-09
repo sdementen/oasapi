@@ -33,6 +33,24 @@ paths: {}
     assert results == set()
 
 
+def test_empty_swagger():
+    """This is the minimal testing"""
+    results = validate_swagger({})
+
+    # no error in this basic test
+    assert results == {
+        JsonSchemaValidationError(
+            path=(), reason="'info' is a required property", type="Json schema validator error"
+        ),
+        JsonSchemaValidationError(
+            path=(), reason="'paths' is a required property", type="Json schema validator error"
+        ),
+        JsonSchemaValidationError(
+            path=(), reason="'swagger' is a required property", type="Json schema validator error"
+        ),
+    }
+
+
 def test_schema_error():
     swagger_str = """
 swagger: '2.0'
