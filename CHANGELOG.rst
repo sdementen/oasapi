@@ -2,7 +2,11 @@
 Changelog
 =========
 
+0.1.9 (2019-01-10)
+------------------
 
+* Improve validation of array parameters
+* Improve documentation
 
 0.1.8 (2019-01-09)
 ------------------
