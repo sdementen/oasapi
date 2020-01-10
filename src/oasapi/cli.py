@@ -106,7 +106,10 @@ def validate(swagger_fileurl: FileURL):
     if errors:
         # display error messages and exit with code = 1
         click.echo(
-            click.style("The swagger is not valid. Following errors have been detected:", fg="red")
+            click.style(
+                f"The swagger is not valid. Following {len(errors)} errors have been detected:",
+                fg="red",
+            )
         )
         for error in sorted(errors, key=lambda error: str(error)):
             click.echo(
