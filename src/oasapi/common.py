@@ -32,8 +32,6 @@ def find_keys(d, key, path=()):
             assert key in KEY_VALIDATION, f"Key '{key}' not yet handled in 'find_keys'"
             if KEY_VALIDATION[key](path):
                 yield d[key], path
-            else:
-                logger.warning(f"'{path}'' not a '{key}', check if not a bug in 'find_keys'")
 
         for k, v in d.items():
             yield from find_keys(v, key, path + (k,))
