@@ -30,6 +30,7 @@ Example of usage (JSON file):
 
 .. command-output:: python -m oasapi validate samples/swagger_petstore.json
 .. command-output:: python -m oasapi validate samples/swagger_petstore_with_errors.json
+   :returncode: 1
 
 Example of usage (JSON URL)
 
