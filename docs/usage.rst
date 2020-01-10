@@ -22,7 +22,16 @@ The `validate` command will validate a file given as parameter
 
 .. command-output:: python -m oasapi validate --help
 
-Example of usage
+Example of usage (YAML file)
+
+.. command-output:: python -m oasapi validate samples/swagger_petstore.yaml
+
+Example of usage (JSON file):
 
 .. command-output:: python -m oasapi validate samples/swagger_petstore.json
 .. command-output:: python -m oasapi validate samples/swagger_petstore_with_errors.json
+
+Example of usage (JSON URL)
+
+.. command-output:: python -m oasapi validate http://petstore.swagger.io/v2/swagger.json
+

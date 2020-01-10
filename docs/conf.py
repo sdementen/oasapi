@@ -14,6 +14,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinxcontrib.programoutput",
+    "sphinx_autodoc_typehints",
 ]
 source_suffix = ".rst"
 master_doc = "index"
