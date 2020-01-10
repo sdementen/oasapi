@@ -59,7 +59,7 @@ def test_validate_nok():
     result = runner.invoke(validate, [str(swagger_path)])
 
     assert result.output == (
-        "The swagger is not valid. Following errors have been detected:\n"
+        "The swagger is not valid. Following 5 errors have been detected:\n"
         "- Duplicate operationId @ '$['paths']['/pet/findByStatus']['get']' "
         "-> the operationId 'updatePet' is already used in an endpoint\n"
         "- Json schema validator error @ '$['info']' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"

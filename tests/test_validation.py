@@ -180,29 +180,90 @@ paths:
       in: query
       type: string
       enum: [there, are, duplicates, duplicates]
+    - name: param_array
+      in: query
+      type: array
 """
     swagger = yaml.safe_load(swagger_str)
 
     results = check_parameters(swagger)
     assert results == {
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", '[1] (param["name"])', "default"),
+            path=("paths", "/foo", "parameters", "[1] (param_str)", "default"),
             reason="The default value '['hello', 'world']' has not the expected type 'string'",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", '[2] (param["name"])', "default"),
+            path=("paths", "/foo", "parameters", "[2] (param_str)", "default"),
             reason="The default value '1' has not the expected type 'string'",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", '[3] (param["name"])', "default"),
+            path=("paths", "/foo", "parameters", "[3] (param_enum_wrong_default)", "default"),
             reason="The default value 'this-is-not-valid' is not one of the enum values ['there', 'are', 'valid', 'values']",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", '[5] (param["name"])', "enum"),
+            path=("paths", "/foo", "parameters", "[5] (param_enum_duplicates)", "enum"),
             reason="The enum values ['there', 'are', 'duplicates', 'duplicates'] contains duplicate values",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[6] (param_array)"),
+            reason="The parameter is of type 'array' but is missing an 'items' field",
+            type="Parameter definition error",
+        ),
+    }
+
+
+def test_check_parameters_array_recurse():
+    swagger_str = """
+swagger: '2.0'
+info:
+  version: v1.0
+  title: my api
+paths:
+  /foo:
+    parameters:
+    - name: param_array_ok
+      in: query
+      type: array
+      items:
+        type: array
+        items:
+          type: string
+          default: this-is-valid
+    - name: param_array_nok
+      in: query
+      type: array
+      items:
+        type: array
+        items:
+          type: string
+          enum: [there, are, duplicate, duplicate, values]
+          default: this-is-not-valid
+"""
+    swagger = yaml.safe_load(swagger_str)
+
+    results = check_parameters(swagger)
+    assert results == {
+        ParameterDefinitionValidationError(
+            path=(
+                "paths",
+                "/foo",
+                "parameters",
+                "[1] (param_array_nok)",
+                "items",
+                "items",
+                "default",
+            ),
+            reason="The default value 'this-is-not-valid' is not one of the enum values "
+            "['there', 'are', 'duplicate', 'duplicate', 'values']",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[1] (param_array_nok)", "items", "items", "enum"),
+            reason="The enum values ['there', 'are', 'duplicate', 'duplicate', 'values'] contains duplicate values",
             type="Parameter definition error",
         ),
     }

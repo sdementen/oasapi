@@ -5,7 +5,7 @@ for semantic rules (i.e. beyond teh JSONSchema validation of the swagger)"""
 import json
 from itertools import groupby
 from pathlib import Path
-from typing import Set
+from typing import Set, Dict
 
 from jsonschema import Draft4Validator
 
@@ -21,7 +21,7 @@ from .events import (
 )
 
 
-def check_security(swagger):
+def check_security(swagger: Dict):
     """
     Check that uses of security with its scopes matches a securityDefinition
 
@@ -60,7 +60,53 @@ def check_security(swagger):
     return events
 
 
-def check_parameters(swagger):
+def _check_parameter(param: Dict, path_param):
+    events = set()
+
+    default = param.get("default")
+    type = param.get("type")
+    enum = param.get("enum")
+
+    # check if type==array that there is an items
+    if type == "array" and "items" not in param:
+        events.add(
+            ParameterDefinitionValidationError(
+                path=path_param,
+                reason=f"The parameter is of type 'array' but is missing an 'items' field",
+            )
+        )
+
+    # check enum does not contain duplicates
+    if enum:
+        if len(set(enum)) != len(enum):
+            events.add(
+                ParameterDefinitionValidationError(
+                    path=path_param + ("enum",),
+                    reason=f"The enum values {enum} contains duplicate values",
+                )
+            )
+        if default is not None and default not in enum:
+            events.add(
+                ParameterDefinitionValidationError(
+                    path=path_param + ("default",),
+                    reason=f"The default value '{default}' is not one of the enum values {enum}",
+                )
+            )
+
+    # check default value in accordance with type
+    if default and type:
+        if type == "string" and not isinstance(default, str):
+            events.add(
+                ParameterDefinitionValidationError(
+                    path=path_param + ("default",),
+                    reason=f"The default value '{default}' has not the expected type '{type}'",
+                )
+            )
+
+    return events
+
+
+def check_parameters(swagger: Dict):
     """
     Check parameters for:
     - duplicate items in enum
@@ -73,45 +119,25 @@ def check_parameters(swagger):
 
     for parameters, path in find_keys(swagger, "parameters"):
         for iparam, param in enumerate(parameters):
-            default = param.get("default")
-            type = param.get("type")
-            enum = param.get("enum")
-            path_param = path + ("parameters", f'[{iparam}] (param["name"])')
-            # check enum does not contain duplicates
-            if enum:
-                if len(set(enum)) != len(enum):
-                    events.add(
-                        ParameterDefinitionValidationError(
-                            path=path_param + ("enum",),
-                            reason=f"The enum values {enum} contains duplicate values",
-                        )
-                    )
-                if default is not None and default not in enum:
-                    events.add(
-                        ParameterDefinitionValidationError(
-                            path=path_param + ("default",),
-                            reason=f"The default value '{default}' is not one of the enum values {enum}",
-                        )
-                    )
-
-            # check default value in accordance with type
-            if default and type:
-                if type == "string" and not isinstance(default, str):
-                    events.add(
-                        ParameterDefinitionValidationError(
-                            path=path_param + ("default",),
-                            reason=f"The default value '{default}' has not the expected type '{type}'",
-                        )
-                    )
+            path_param = path + ("parameters", f'[{iparam}] ({param["name"]})')
+            while True:
+                events |= _check_parameter(param, path_param)
+                if param.get("type") == "array":
+                    # recurse in array items type
+                    path_param += ("items",)
+                    param = param.get("items", {})
+                else:
+                    break
 
     return events
 
 
-def check_references(swagger):
+def check_references(swagger: Dict):
     """
     Find reference in paths, for /definitions/ and /responses/ /securityDefinitions/.
 
-    Follow from these, references to other references, till no more added
+    Follow from these, references to other references, till no more added.
+
     :param swagger:
     :return:
     """
@@ -134,7 +160,7 @@ def check_references(swagger):
     return events
 
 
-def detect_duplicate_operationId(swagger):
+def detect_duplicate_operationId(swagger: Dict):
     """Return list of Action with duplicate operationIds"""
     # retrieve all operationIds
     opIds = list(find_keys(swagger.get("paths", {}), "operationId", path=("paths",)))
@@ -159,24 +185,20 @@ def detect_duplicate_operationId(swagger):
     return events
 
 
-def validate_swagger(swagger) -> Set[ValidationError]:
+def validate_swagger(swagger: Dict) -> Set[ValidationError]:
     """
     Validate a swagger specification.
 
-    The validations checks the following points
-    - valide swagger re. OAS 2.0 schema
+    The validations checks the following points:
+
+    - validate against re. OAS 2.0 schema
     - no missing reference
     - unicity of operationId
-    It also proposes suggestions for:
-    - health endpoint
-    - request_id header
-    - okta securisation
-    - use of a FQDN and https
-    - length of paths
-    - presence of documentation
+    - no missing securityDefinition
+    - consistency of parameters (default value vs type)
 
     :param swagger: the swagger spec
-    :return: a list of errors
+    :return: a set of errors
     """
 
     # validate the json schema of the swagger_lib
