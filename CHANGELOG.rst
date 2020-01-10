@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.1.10 (2019-01-10)
+------------------
+
+* [dev] fix tag name to remove "v" (for readthedocs latest build)
+* [dev] fix travis ci python version for doc
+
 0.1.9 (2019-01-10)
 ------------------
 
