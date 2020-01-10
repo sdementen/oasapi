@@ -1,16 +1,29 @@
-from typing import Iterable, Union, Dict
+from typing import Iterable, Union, Dict, Tuple
 
 from attr import dataclass
+
+#: the type of a swagger path
+SwaggerPath = Tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class Event:
-    path: Iterable[Union[str, Iterable[str]]]
+    """Base class for an event (an error, an action, ...).
+    """
+
+    #: the path in the dictionary to which the even relates
+    path: SwaggerPath
+
+    #: the reason of the event
     reason: str
 
+    #: the string representation of the type of event
+    type: str
+
     @staticmethod
-    def format_path(pth):
-        return "$[" + "][".join(map(repr, pth)) + "]"
+    def format_path(path: SwaggerPath) -> str:
+        """Format a path to a JSON Path alike string"""
+        return "$[" + "][".join(map(repr, path)) + "]"
 
 
 @dataclass(frozen=True)
@@ -20,7 +33,10 @@ class Action(Event):
 
 @dataclass(frozen=True)
 class Error(Event):
-    type: str
+    """Base class for an error
+    """
+
+    pass
 
 
 @dataclass(frozen=True)
@@ -40,6 +56,9 @@ class FilterWarning(Warning):
 
 @dataclass(frozen=True)
 class ValidationError(Error):
+    """Base class for a validation error (used in the swagger validation)
+    """
+
     pass
 
 
@@ -127,33 +146,48 @@ class BasePathRewrittenFilterAction(FilterAction):
 
 @dataclass(frozen=True)
 class ParameterDefinitionValidationError(ValidationError):
+    """An error on a parameter definition"""
+
     type: str = "Parameter definition error"
 
 
 @dataclass(frozen=True)
 class ReferenceNotFoundValidationError(ValidationError):
+    """An error on a reference used but not found"""
+
     type: str = "Reference not found"
 
 
 @dataclass(frozen=True)
 class SecurityDefinitionNotFoundValidationError(ValidationError):
+    """An error on a securityDefinition used but not found"""
+
     type: str = "Security definition not found"
 
 
 @dataclass(frozen=True)
 class OAuth2ScopeNotFoundInSecurityDefinitionValidationError(ValidationError):
+    """An error on an OAuth2 scope used but not found"""
+
     type: str = "Security scope not found"
 
 
 @dataclass(frozen=True)
 class DuplicateOperationIdValidationError(ValidationError):
+    """An error on two operations using the same operationId
+    """
+
+    #: the name of the duplicate operationId
     operationId: str
+    #: the path of the first operation using the operationId
     path_first_used: Iterable[Union[str, Iterable[str]]]
     type: str = "Duplicate operationId"
 
 
 @dataclass(frozen=True)
 class JsonSchemaValidationError(ValidationError):
+    """An error due to an invalid schema"""
+
     type: str = "Json schema validator error"
 
 
