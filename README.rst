@@ -51,9 +51,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.org/project/oasapi
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/sdementen/oasapi/v0.1.10.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/sdementen/oasapi/0.1.10.svg
     :alt: Commits since latest release
-    :target: https://github.com/sdementen/oasapi/compare/v0.1.10...master
+    :target: https://github.com/sdementen/oasapi/compare/0.1.10...master
 
 
 
@@ -62,7 +62,7 @@ Overview
 Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling:
 
  - validation of an OAS 2.0 document
- - [todo] control backward compability between two OAS 2.0 documents
+ - [todo] control backward compatibility between two OAS 2.0 documents
  - [todo] rewriting the basePath and paths of an OAS 2.0 document
  - [todo] filtering endpoints of an OAS 2.0 document to generate a subset of the API
  - [todo] adding/removing securityDefinitions on an OAS 2.0 document
