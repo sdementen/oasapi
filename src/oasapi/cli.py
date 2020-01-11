@@ -42,7 +42,7 @@ def shorten_text(txt, before, after, placeholder="..."):
 
 @click.group()
 def main():
-    pass
+    """These are common operations offered by the oasapi library"""
 
 
 @dataclass
@@ -52,29 +52,28 @@ class FileURL:
 
     @classmethod
     def open_url(cls, ctx, param, value):
-        if value is not None:
-            try:
-                # try to open as if value is an URL
-                fp = urlopen(value)
-            except HTTPError as err:
-                raise click.ClickException(
-                    f"Error when downloading {value} : {err.reason} ({err.code})"
-                )
-            except (URLError, ValueError):
-                # it should be a file
-                path = click.File()
-                fp = path.convert(value=value, param=param, ctx=ctx)
-                if value == "-":
-                    value = "[stdin]"
+        try:
+            # try to open as if value is an URL
+            fp = urlopen(value)
+        except HTTPError as err:
+            raise click.ClickException(
+                f"Error when downloading {value} : {err.reason} ({err.code})"
+            )
+        except (URLError, ValueError):
+            # it should be a file
+            path = click.File()
+            fp = path.convert(value=value, param=param, ctx=ctx)
+            if value == "-":
+                value = "[stdin]"
 
-            # read the file
-            content = fp.read()
+        # read the file
+        content = fp.read()
 
-            # convert to text if bytes assuming utf-8
-            if isinstance(content, bytes):
-                content = content.decode("utf-8")
+        # convert to text if bytes assuming utf-8
+        if isinstance(content, bytes):
+            content = content.decode("utf-8")
 
-            return cls(url=value, content=content)
+        return cls(url=value, content=content)
 
 
 @main.command(name="validate")
@@ -99,7 +98,7 @@ def validate(swagger_fileurl: FileURL):
 
     if swagger is None:
         raise click.ClickException(
-            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' with content {shorten_text(swagger_fileurl.content,15,10)}"
+            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' with content {shorten_text(swagger_fileurl.content, 15, 10)}"
         )
 
     errors = oasapi.validate_swagger(swagger)
