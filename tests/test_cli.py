@@ -36,7 +36,7 @@ Commands:
 def test_validate_help():
     runner = CliRunner()
     result = runner.invoke(validate, ["--help"])
-    print(result.output)
+
     assert (
         result.output
         == """Usage: validate [OPTIONS] SWAGGER_FILEURL
