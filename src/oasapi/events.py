@@ -23,7 +23,7 @@ class Event:
     @staticmethod
     def format_path(path: SwaggerPath) -> str:
         """Format a path to a JSON Path alike string"""
-        return "$[" + "][".join(map(repr, path)) + "]"
+        return ".".join(map(str, path))
 
 
 @dataclass(frozen=True)
@@ -180,7 +180,7 @@ class DuplicateOperationIdValidationError(ValidationError):
     #: the name of the duplicate operationId
     operationId: str
     #: the path of the first operation using the operationId
-    path_first_used: Iterable[Union[str, Iterable[str]]]
+    path_already_used: Iterable[Union[str, Iterable[str]]]
     type: str = "Duplicate operationId"
 
 
