@@ -15,7 +15,9 @@ Why does this file exist, and why not put this in __main__?
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 import json
+import logging
 import sys
+from oasapi.timer import Timer
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
@@ -77,11 +79,16 @@ class FileURL:
 
 
 @main.command(name="validate")
-@click.argument("swagger_fileurl", callback=FileURL.open_url)
-def validate(swagger_fileurl: FileURL):
+@click.argument("swagger_fileurl", callback=FileURL.open_url, metavar="SWAGGER")
+@click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
+def validate(swagger_fileurl: FileURL, verbose):
     """Validate the SWAGGER file.
 
-    SWAGGER is the path to the swagger file, in json or yaml format. It can be a file path, an URL or a dash (-) for the stdin"""
+    SWAGGER is the path to the swagger file, in json or yaml format.
+    It can be a file path, an URL or a dash (-) for the stdin"""
+    if verbose > 0:
+        logging.basicConfig(level=logging.DEBUG)
+
     file_content = swagger_fileurl.content
     if file_content.startswith("{"):
         # this is a json file
@@ -98,10 +105,13 @@ def validate(swagger_fileurl: FileURL):
 
     if swagger is None:
         raise click.ClickException(
-            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' with content {shorten_text(swagger_fileurl.content, 15, 10)}"
+            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' "
+            f"with content {shorten_text(swagger_fileurl.content, 15, 10)}"
         )
 
-    errors = oasapi.validate_swagger(swagger)
+    with Timer("swagger validation"):
+        errors = oasapi.validate_swagger(swagger)
+
     if errors:
         # display error messages and exit with code = 1
         click.echo(

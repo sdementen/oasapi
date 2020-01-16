@@ -39,7 +39,7 @@ def test_validate_help():
 
     assert (
         result.output
-        == """Usage: validate [OPTIONS] SWAGGER_FILEURL
+        == """Usage: validate [OPTIONS] SWAGGER
 
   Validate the SWAGGER file.
 
@@ -47,7 +47,8 @@ def test_validate_help():
   file path, an URL or a dash (-) for the stdin
 
 Options:
-  --help  Show this message and exit.
+  -v, --verbose  Make the operation more talkative
+  --help         Show this message and exit.
 """
     )
     assert result.exit_code == 0
