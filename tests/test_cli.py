@@ -124,13 +124,13 @@ def test_validate_nok():
 
     assert result.output == (
         "The swagger is not valid. Following 5 errors have been detected:\n"
-        "- Duplicate operationId @ '$['paths']['/pet/findByStatus']['get']' "
+        "- Duplicate operationId @ 'paths./pet/findByStatus.get.operationId' "
         "-> the operationId 'updatePet' is already used in an endpoint\n"
-        "- Json schema validator error @ '$['info']' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"
-        "- Json schema validator error @ '$['paths']['/pet']['post']' -> 'responses' is a required property\n"
-        "- Json schema validator error @ '$['schemes'][1]' -> 'ftp' is not one of ['http', 'https', 'ws', 'wss']\n"
-        "- Security scope not found @ '$['paths']['/pet']['put']['security']['petstore_auth']['think:pets']' "
-        "-> scope think:pets is not declared in the scopes of the securityDefinitions 'petstore_auth'\n"
+        "- Json schema validator error @ 'info' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"
+        "- Json schema validator error @ 'paths./pet.post' -> 'responses' is a required property\n"
+        "- Json schema validator error @ 'schemes.1' -> 'ftp' is not one of ['http', 'https', 'ws', 'wss']\n"
+        "- Security scope not found @ 'paths./pet.put.security.[0].petstore_auth.think:pets' -> "
+        "scope think:pets is not declared in the scopes of the securityDefinitions 'petstore_auth'\n"
     )
     assert result.exit_code == 1
 

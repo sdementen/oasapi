@@ -7,9 +7,11 @@ from itertools import groupby
 from pathlib import Path
 from typing import Set, Dict
 
+from jsonpath_ng import parse, Union
 from jsonschema import Draft4Validator
 
-from .common import extract_references, find_keys
+from oasapi.common import get_elements, OPERATIONS_LOWER
+from .common import extract_references
 from .events import (
     ReferenceNotFoundValidationError,
     ParameterDefinitionValidationError,
@@ -32,30 +34,34 @@ def check_security(swagger: Dict):
 
     secdefs = swagger.get("securityDefinitions", {})
 
-    for secs, path in find_keys(swagger, "security"):
-        for sec in secs:
-            # retrieve security definition name from security declaration
-            for sec_key in sec.keys():
-                secdef = secdefs.get(sec_key)
-                if secdef is None:
+    security_jspath = Union(
+        parse("security.[*].*"), parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).security.[*].*")
+    )
+
+    for sec_key, scopes, path in get_elements(swagger, security_jspath):
+        # retrieve security definition name from security declaration
+        secdef = secdefs.get(sec_key)
+
+        if secdef is None:
+            events.add(
+                SecurityDefinitionNotFoundValidationError(
+                    path=path, reason=f"securityDefinitions '{sec_key}' does not exist"
+                )
+            )
+        else:
+            # retrieve scopes declared in the secdef
+            declared_scopes = secdef.get("scopes", [])
+            if not isinstance(scopes, list):
+                continue
+            # verify scopes can be resolved
+            for scope in scopes:
+                if scope not in declared_scopes:
                     events.add(
-                        SecurityDefinitionNotFoundValidationError(
-                            path=path + ("security", sec_key),
-                            reason=f"securityDefinitions '{sec_key}' does not exist",
+                        OAuth2ScopeNotFoundInSecurityDefinitionValidationError(
+                            path=path + (scope,),
+                            reason=f"scope {scope} is not declared in the scopes of the securityDefinitions '{sec_key}'",
                         )
                     )
-                else:
-                    # retrieve scopes declared in the secdef
-                    scopes = secdef.get("scopes", [])
-                    # verify scopes can be resolved
-                    for scope in sec[sec_key]:
-                        if scope not in scopes:
-                            events.add(
-                                OAuth2ScopeNotFoundInSecurityDefinitionValidationError(
-                                    path=path + ("security", sec_key, scope),
-                                    reason=f"scope {scope} is not declared in the scopes of the securityDefinitions '{sec_key}'",
-                                )
-                            )
 
     return events
 
@@ -117,17 +123,23 @@ def check_parameters(swagger: Dict):
     """
     events = set()
 
-    for parameters, path in find_keys(swagger, "parameters"):
-        for iparam, param in enumerate(parameters):
-            path_param = path + ("parameters", f'[{iparam}] ({param["name"]})')
-            while True:
-                events |= _check_parameter(param, path_param)
-                if param.get("type") == "array":
-                    # recurse in array items type
-                    path_param += ("items",)
-                    param = param.get("items", {})
-                else:
-                    break
+    security_jspath = Union(
+        parse("parameters.[*]"),
+        Union(
+            parse(f"paths.*.parameters.[*]"),
+            parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).parameters.[*]"),
+        ),
+    )
+
+    for _, param, path in get_elements(swagger, security_jspath):
+        while True:
+            events |= _check_parameter(param, path)
+            if param.get("type") == "array":
+                # recurse in array items type
+                path += ("items",)
+                param = param.get("items", {})
+            else:
+                break
 
     return events
 
@@ -141,7 +153,7 @@ def check_references(swagger: Dict):
     :param swagger:
     :return:
     """
-    reference_types = {"definitions", "responses", "securityDefinitions"}
+    reference_types = {"definitions", "responses", "securityDefinitions", "parameters"}
 
     refs = extract_references(swagger)
     events = set()
@@ -162,21 +174,25 @@ def check_references(swagger: Dict):
 
 def detect_duplicate_operationId(swagger: Dict):
     """Return list of Action with duplicate operationIds"""
-    # retrieve all operationIds
-    opIds = list(find_keys(swagger.get("paths", {}), "operationId", path=("paths",)))
-
     events = set()
 
-    for opId, key_pths in groupby(sorted(opIds), key=lambda key_pth: key_pth[0]):
-        pths = tuple(subpth for _, subpth in key_pths)
+    # retrieve all operationIds
+    operationId_jspath = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).operationId")
 
+    def get_operationId_name(name_value_path):
+        return name_value_path[1]
+
+    operationIds = sorted(get_elements(swagger, operationId_jspath), key=get_operationId_name)
+
+    for opId, key_pths in groupby(operationIds, key=get_operationId_name):
+        pths = tuple(subpth for _, _, subpth in key_pths)
         if len(pths) > 1:
             pth_first, *pths = pths
             for pth in pths:
                 events.add(
                     DuplicateOperationIdValidationError(
                         path=pth,
-                        path_first_used=pth_first,
+                        path_already_used=pth_first,
                         reason=f"the operationId '{opId}' is already used in an endpoint",
                         operationId=opId,
                     )

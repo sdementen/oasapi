@@ -130,18 +130,39 @@ paths:
       responses:
         200:
           description: OK
+    patch:
+      operationId: this-is-not-a-unique-id
+      responses:
+        200:
+          description: OK
+    parameters:
+      operationId: this-is-not-a-unique-id
+      responses:
+        200:
+          description: OK
+# operationIds below should not trigger errors as not in expected position
+    operationId: this-is-not-a-unique-id
+  operationId: this-is-not-a-unique-id
+operationId: this-is-not-a-unique-id
     """
     swagger = yaml.safe_load(swagger_str)
 
     results = detect_duplicate_operationId(swagger)
     assert results == {
         DuplicateOperationIdValidationError(
-            path=("paths", "/foo", "put"),
+            path=("paths", "/foo", "patch", "operationId"),
             reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint",
             operationId="this-is-not-a-unique-id",
-            path_first_used=("paths", "/foo", "post"),
+            path_already_used=("paths", "/foo", "post", "operationId"),
             type="Duplicate operationId",
-        )
+        ),
+        DuplicateOperationIdValidationError(
+            path=("paths", "/foo", "put", "operationId"),
+            reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint",
+            operationId="this-is-not-a-unique-id",
+            path_already_used=("paths", "/foo", "post", "operationId"),
+            type="Duplicate operationId",
+        ),
     }
 
 
@@ -151,8 +172,20 @@ swagger: '2.0'
 info:
   version: v1.0
   title: my api
+parameters:
+- name: param_int
+  in: query
+  type: integer
+  default: "error-on-parameter-definitions"
 paths:
   /foo:
+    get:
+      parameters:
+      - name: param_int
+        in: query
+        type: integer
+        default: "error-on-operation-specific-definitions"
+
     parameters:
     - name: param_int
       in: query
@@ -189,27 +222,27 @@ paths:
     results = check_parameters(swagger)
     assert results == {
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[1] (param_str)", "default"),
+            path=("paths", "/foo", "parameters", "[1]", "default"),
             reason="The default value '['hello', 'world']' has not the expected type 'string'",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[2] (param_str)", "default"),
+            path=("paths", "/foo", "parameters", "[2]", "default"),
             reason="The default value '1' has not the expected type 'string'",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[3] (param_enum_wrong_default)", "default"),
+            path=("paths", "/foo", "parameters", "[3]", "default"),
             reason="The default value 'this-is-not-valid' is not one of the enum values ['there', 'are', 'valid', 'values']",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[5] (param_enum_duplicates)", "enum"),
+            path=("paths", "/foo", "parameters", "[5]", "enum"),
             reason="The enum values ['there', 'are', 'duplicates', 'duplicates'] contains duplicate values",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[6] (param_array)"),
+            path=("paths", "/foo", "parameters", "[6]"),
             reason="The parameter is of type 'array' but is missing an 'items' field",
             type="Parameter definition error",
         ),
@@ -248,21 +281,13 @@ paths:
     results = check_parameters(swagger)
     assert results == {
         ParameterDefinitionValidationError(
-            path=(
-                "paths",
-                "/foo",
-                "parameters",
-                "[1] (param_array_nok)",
-                "items",
-                "items",
-                "default",
-            ),
+            path=("paths", "/foo", "parameters", "[1]", "items", "items", "default"),
             reason="The default value 'this-is-not-valid' is not one of the enum values "
             "['there', 'are', 'duplicate', 'duplicate', 'values']",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[1] (param_array_nok)", "items", "items", "enum"),
+            path=("paths", "/foo", "parameters", "[1]", "items", "items", "enum"),
             reason="The enum values ['there', 'are', 'duplicate', 'duplicate', 'values'] contains duplicate values",
             type="Parameter definition error",
         ),
@@ -286,6 +311,15 @@ paths:
         sec2: [not-existing-scope]
       - sec3: [existing-scope]
       - sec-not-exist: []
+    PATCH:
+      responses:
+        200:
+          description: OK
+      security:
+      - sec1: []
+    parameters:
+      security: [ {sec-not-exist-but-should-not-raise: []} ]
+  security: [ {sec-not-exist-but-should-not-raise: []} ]
 security: []
 securityDefinitions:
   sec1:
@@ -304,12 +338,12 @@ securityDefinitions:
     results = check_security(swagger)
     assert results == {
         OAuth2ScopeNotFoundInSecurityDefinitionValidationError(
-            path=("paths", "/foo", "get", "security", "sec2", "not-existing-scope"),
+            path=("paths", "/foo", "get", "security", "[0]", "sec2", "not-existing-scope"),
             reason="scope not-existing-scope is not declared in the scopes of the securityDefinitions 'sec2'",
             type="Security scope not found",
         ),
         SecurityDefinitionNotFoundValidationError(
-            path=("paths", "/foo", "get", "security", "sec-not-exist"),
+            path=("paths", "/foo", "get", "security", "[2]", "sec-not-exist"),
             reason="securityDefinitions 'sec-not-exist' does not exist",
             type="Security definition not found",
         ),
