@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1.12 (2020-01-16)
+-------------------
+
+* add pruning of unused items (definitions, responses, parameters, securityDefinitions/scopes)
+
 0.1.11 (2020-01-16)
 -------------------
 

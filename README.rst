@@ -62,6 +62,7 @@ Overview
 Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling:
 
  - validation of an OAS 2.0 document
+ - prune an OAS 2.0 document of its unused elements
  - [todo] control backward compatibility between two OAS 2.0 documents
  - [todo] rewriting the basePath and paths of an OAS 2.0 document
  - [todo] filtering endpoints of an OAS 2.0 document to generate a subset of the API
@@ -79,6 +80,9 @@ Install oasapi from PyPI with::
 You can also install the in-development version with::
 
     pip install https://github.com/sdementen/oasapi/archive/master.zip
+
+OAS Document validation
+-----------------------
 
 Validate an OAS 2.0 Document (in JSON or YAML format) with::
 
@@ -99,6 +103,13 @@ You can also pipe a swagger to the command (if oasapi cannot retrieve the file b
     type samples/swagger_petstore.json | docker run -i sdementen/oasapi validate -
     curl http://petstore.swagger.io/v2/swagger.json | oasapi validate -
     curl -s http://petstore.swagger.io/v2/swagger.json | docker run -i sdementen/oasapi validate -
+
+OAS Document pruning
+--------------------
+
+Similarly, you can use the pruning command to prune an OAS 2.0 document of its unused elements as::
+
+    oasapi prune http://petstore.swagger.io/v2/swagger.json -o new_swagger.json
 
 
 Documentation

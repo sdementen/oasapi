@@ -14,39 +14,6 @@ OPERATIONS_RE = re.compile("|".join(OPERATIONS), re.IGNORECASE)
 
 logger = logging.getLogger(__file__)
 
-KEY_VALIDATION = {
-    "security": lambda path: (not path) or (path[0] == "paths" and len(path) == 3),
-    "parameters": lambda path: (not path) or (path[0] == "paths" and 2 <= len(path) <= 3),
-    "$ref": lambda path: True,
-    "operationId": lambda path: len(path) == 3
-    and path[0] == "paths"
-    and OPERATIONS_RE.match(path[2]),
-}
-
-
-def find_keys(d, key, path=()):
-    """Find keys with a given value (e.g. operationId, ...) and return it with the paths.
-    It checks that the key is in the right location in the swagger (e.g. an operationId can only be found in paths/xxx/xxx/operationId).
-
-    key should be one of ('security', 'parameters', '$ref', 'operationId')
-    """
-    if isinstance(d, list):
-        for i, e in enumerate(d):
-            yield from find_keys(e, key, path + (i,))
-    elif isinstance(d, dict):
-        if key in d:
-            assert key in KEY_VALIDATION, f"Key '{key}' not yet handled in 'find_keys'"
-            if KEY_VALIDATION[key](path):
-                yield d[key], path
-
-        for k, v in d.items():
-            yield from find_keys(v, key, path + (k,))
-
-
-def extract_references(specs_part):
-    """reference_type in definitions/responses => return sets of references used"""
-    return {tuple(key[2:].split("/")) + (path,) for key, path in find_keys(specs_part, "$ref")}
-
 
 # Return the longest prefix of all list elements.
 def commonprefix(m):
@@ -100,3 +67,6 @@ def _(o):
         return tuple_path(o.context) + tuple_path(o.path)
     else:
         return ()
+
+
+REFERENCE_SECTIONS = ["definitions", "responses", "parameters"]

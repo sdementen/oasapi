@@ -17,7 +17,6 @@ Why does this file exist, and why not put this in __main__?
 import json
 import logging
 import sys
-from oasapi.timer import Timer
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
@@ -26,6 +25,7 @@ import yaml
 from attr import dataclass
 
 import oasapi
+from oasapi.timer import Timer
 
 
 def shorten_text(txt, before, after, placeholder="..."):
@@ -131,3 +131,61 @@ def validate(swagger_fileurl: FileURL, verbose):
     else:
         # informs everything OK
         click.echo(click.style("The swagger is valid.", fg="green"))
+
+
+@main.command(name="prune")
+@click.argument("swagger_fileurl", callback=FileURL.open_url, metavar="SWAGGER")
+@click.option("-o", "--output", help="Path to write the pruned swagger", type=click.File("w"))
+@click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
+def prune(swagger_fileurl: FileURL, output, verbose):
+    """Prune unused global definitions/responses/parameters and unused securityDefinition/scopes from the swagger.
+
+    SWAGGER is the path to the swagger file, in json or yaml format.
+    It can be a file path, an URL or a dash (-) for the stdin"""
+    if verbose > 0:
+        logging.basicConfig(level=logging.DEBUG)
+
+    file_content = swagger_fileurl.content
+    if file_content.startswith("{"):
+        # this is a json file
+        try:
+            swagger = json.loads(file_content)
+        except json.JSONDecodeError:
+            swagger = None
+    else:
+        # this is a yaml file
+        try:
+            swagger = yaml.safe_load(file_content)
+        except yaml.YAMLError:
+            swagger = None
+
+    if swagger is None:
+        raise click.ClickException(
+            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' "
+            f"with content {shorten_text(swagger_fileurl.content, 15, 10)}"
+        )
+
+    with Timer("swagger pruning"):
+        swagger, actions = oasapi.prune_unused_global_items(swagger)
+        swagger, actions_bis = oasapi.prune_unused_security_definitions(swagger)
+        actions += actions_bis
+
+    if output:
+        output.write(json.dumps(swagger, indent=2))
+
+    if actions:
+        # display error messages and exit with code = 1
+        click.echo(
+            click.style(f"The swagger has been pruned of {len(actions)} elements:", fg="red")
+        )
+        for action in sorted(actions, key=lambda error: str(error)):
+            click.echo(
+                click.style(
+                    f"- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",
+                    fg="red",
+                )
+            )
+        sys.exit(1)
+    else:
+        # informs everything OK
+        click.echo(click.style("The swagger had no unused elements.", fg="green"))

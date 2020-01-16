@@ -3,7 +3,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from oasapi.cli import validate, shorten_text, main
+from oasapi.cli import validate, shorten_text, main, prune
 
 
 def test_shorten_text():
@@ -27,6 +27,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  prune     Prune unused global definitions/responses/parameters and unused...
   validate  Validate the SWAGGER file.
 """
     )
@@ -49,6 +50,29 @@ def test_validate_help():
 Options:
   -v, --verbose  Make the operation more talkative
   --help         Show this message and exit.
+"""
+    )
+    assert result.exit_code == 0
+
+
+def test_prune_help():
+    runner = CliRunner()
+    result = runner.invoke(prune, ["--help"])
+    print(result.output)
+    assert (
+        result.output
+        == """Usage: prune [OPTIONS] SWAGGER
+
+  Prune unused global definitions/responses/parameters and unused
+  securityDefinition/scopes from the swagger.
+
+  SWAGGER is the path to the swagger file, in json or yaml format. It can be a
+  file path, an URL or a dash (-) for the stdin
+
+Options:
+  -o, --output FILENAME  Path to write the pruned swagger
+  -v, --verbose          Make the operation more talkative
+  --help                 Show this message and exit.
 """
     )
     assert result.exit_code == 0

@@ -7,6 +7,8 @@ from oasapi.events import (
     ParameterDefinitionValidationError,
     SecurityDefinitionNotFoundValidationError,
     OAuth2ScopeNotFoundInSecurityDefinitionValidationError,
+    ReferenceInvalidSection,
+    ReferenceInvalidSyntax,
 )
 from oasapi.validation import (
     validate_swagger,
@@ -88,6 +90,10 @@ paths:
           $ref: "#/definitions/some-not-existing-definition"
         400:
           $ref: "#/responses/some-response"
+        500:
+          $ref: "#/badly-formed"
+        600:
+           $ref: "#/info/version"
 definitions:
   some-definition: {}
 responses:
@@ -99,11 +105,21 @@ responses:
 
     results = check_references(swagger)
     assert results == {
+        ReferenceInvalidSection(
+            path=("paths", "/foo", "get", "responses", 600, "$ref"),
+            reason="Reference #/info/version not referring to one of the sections ['definitions', 'responses', 'parameters']",
+            type="Reference invalid section",
+        ),
+        ReferenceInvalidSyntax(
+            path=("paths", "/foo", "get", "responses", 500, "$ref"),
+            reason="reference #/badly-formed not of the form '#/section/item'",
+            type="Reference invalid syntax",
+        ),
         ReferenceNotFoundValidationError(
-            path=("paths", "/foo", "get", "responses", 300),
+            path=("paths", "/foo", "get", "responses", 300, "$ref"),
             reason="reference '#/definitions/some-not-existing-definition' does not exist",
             type="Reference not found",
-        )
+        ),
     }
 
 
