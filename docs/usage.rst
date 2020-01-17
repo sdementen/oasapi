@@ -72,6 +72,6 @@ Pruning is an operation that will 'clean' the swagger by removing any unused ele
 
 You can prune a document with the ``prune`` command:
 
-.. command-output:: oasapi validate samples/swagger_petstore.json
-.. command-output:: oasapi validate samples/swagger_petstore_with_errors.json
+.. command-output:: oasapi prune samples/swagger_petstore.json
+.. command-output:: oasapi prune samples/swagger_petstore_unused_elements.json
    :returncode: 1
