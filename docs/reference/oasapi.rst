@@ -1,3 +1,5 @@
+.. _oasapi-package:
+
 oasapi
 ======
 

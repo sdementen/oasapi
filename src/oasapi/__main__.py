@@ -12,4 +12,4 @@ Why does this file exist, and why __main__? For more info, read:
 if __name__ == "__main__":  # pragma: no cover
     from oasapi.cli import main
 
-    main()
+    main(prog_name="python -m oasapi")
