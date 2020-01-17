@@ -224,7 +224,19 @@ def detect_duplicate_operationId(swagger: Dict):
     return events
 
 
-def validate_swagger(swagger: Dict) -> Set[ValidationError]:
+def check_schema(swagger: Dict) -> Set[ValidationError]:
+    """Check swagger is compliant with schema"""
+    # validate the json schema of the swagger_lib
+    schema = json.load((Path(__file__).parent / "schemas" / "schema_swagger.json").open())
+    v = Draft4Validator(schema)
+
+    return {
+        JsonSchemaValidationError(path=tuple(error.absolute_path), reason=error.message)
+        for error in v.iter_errors(swagger)
+    }
+
+
+def validate(swagger: Dict) -> Set[ValidationError]:
     """
     Validate a swagger specification.
 
@@ -240,15 +252,8 @@ def validate_swagger(swagger: Dict) -> Set[ValidationError]:
     :return: a set of errors
     """
 
-    # validate the json schema of the swagger_lib
-    schema = json.load((Path(__file__).parent / "schemas" / "schema_swagger.json").open())
-    v = Draft4Validator(schema)
-
     errors = (
-        {
-            JsonSchemaValidationError(path=tuple(error.absolute_path), reason=error.message)
-            for error in v.iter_errors(swagger)
-        }
+        check_schema(swagger)
         | check_references(swagger)
         | check_security(swagger)
         | check_parameters(swagger)

@@ -17,6 +17,7 @@ Why does this file exist, and why not put this in __main__?
 import json
 import logging
 import sys
+from typing import Dict
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
@@ -80,7 +81,7 @@ class FileURL:
 
 @dataclass
 class SwaggerFileURL(FileURL):
-    swagger: str
+    swagger: Dict
 
     @classmethod
     def open_url(cls, ctx, param, value) -> "SwaggerFileURL":
@@ -123,7 +124,7 @@ def validate(swagger_fileurl: SwaggerFileURL, verbose):
     swagger = swagger_fileurl.swagger
 
     with Timer("swagger validation"):
-        errors = oasapi.validate_swagger(swagger)
+        errors = oasapi.validate(swagger)
 
     if errors:
         # display error messages and exit with code = 1
@@ -149,7 +150,7 @@ def validate(swagger_fileurl: SwaggerFileURL, verbose):
 @click.option("-o", "--output", help="Path to write the pruned swagger", type=click.File("w"))
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
 def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
-    """Prune unused global definitions/responses/parameters and unused securityDefinition/scopes from the swagger.
+    """Prune unused global definitions/responses/parameters, unused securityDefinition/scopes and unused tags from the swagger.
 
     SWAGGER is the path to the swagger file, in json or yaml format.
     It can be a file path, an URL or a dash (-) for the stdin"""
@@ -160,12 +161,10 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
 
     with Timer("swagger pruning"):
         try:
-            swagger, actions = oasapi.prune_unused_global_items(swagger)
-            swagger, actions_bis = oasapi.prune_unused_security_definitions(swagger)
-            actions += actions_bis
+            swagger, actions = oasapi.prune(swagger)
         except Exception as e:
             # something wrong happened, check if due to invalid swagger
-            if oasapi.validate_swagger(swagger):
+            if oasapi.validate(swagger):
                 click.secho(
                     f"The swagger could not been pruned as it is invalid. Please ensure the swagger is valid before pruning it.",
                     fg="red",
