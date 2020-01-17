@@ -109,7 +109,7 @@ def test_validate_nok_notexistant_url():
 def test_validate_ok_stdin():
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
-    result = runner.invoke(validate, ["-"], input=json.dumps(swagger))
+    result = runner.invoke(validate, ["-", "-v"], input=json.dumps(swagger))
 
     assert result.output == "The swagger is valid.\n"
     assert result.exit_code == 0
@@ -164,3 +164,46 @@ def test_validate_nofile():
     result = runner.invoke(validate, [])
 
     assert result.exit_code == 2
+
+
+def test_prune_no_pruning_stdin():
+    runner = CliRunner()
+    swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
+    result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
+
+    assert result.output == "The swagger had no unused elements.\n"
+    assert result.exit_code == 0
+
+
+def test_prune_ok_stdin():
+    runner = CliRunner()
+    swagger = dict(
+        swagger="2.0",
+        paths={},
+        info=dict(title="my API", version="v1.0"),
+        definitions={"unused": {}},
+    )
+    result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
+
+    assert (
+        result.output
+        == """The swagger has been pruned of 1 elements:
+- Reference filtered out @ 'definitions.unused' -> reference not used
+"""
+    )
+    assert result.exit_code == 0
+
+
+def test_prune_output_swagger_stdin():
+    runner = CliRunner()
+    swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
+
+    file_output = "output.json"
+    with runner.isolated_filesystem() as fld:
+        fld = Path(fld)
+        result = runner.invoke(prune, ["-", "-o", file_output], input=json.dumps(swagger))
+        assert list(fld.iterdir()) == [fld / file_output]
+        assert (Path(fld) / file_output).read_text() == json.dumps(swagger, indent=2)
+
+    assert result.output == "The swagger had no unused elements.\n"
+    assert result.exit_code == 0

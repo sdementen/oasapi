@@ -41,7 +41,7 @@ def get_elements(dct, jspth):
 
 
 @singledispatch
-def tuple_path(o):
+def tuple_path(o):  # pragma: no cover
     """Return the path of a JSONPath object as a tuple"""
     raise NotImplementedError
 
@@ -52,7 +52,7 @@ def _(o):
 
 
 @tuple_path.register(Child)
-def _(o):
+def _(o):  # pragma: no cover
     return tuple_path(o.left) + tuple_path(o.right)
 
 

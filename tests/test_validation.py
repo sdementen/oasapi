@@ -59,7 +59,14 @@ swagger: '2.0'
 info:
   version: 1.0
   title: my api
-paths: {}
+paths:
+  /foo:
+    get:
+      responses:
+        "200":
+          $ref: "#/definitions/some-definition"
+      security:
+      - baz: "not-a-list"
 """
     swagger = yaml.safe_load(swagger_str)
     results = validate_swagger(swagger)
@@ -70,7 +77,22 @@ paths: {}
             path=("info", "version"),
             reason="1.0 is not of type 'string'",
             type="Json schema validator error",
-        )
+        ),
+        JsonSchemaValidationError(
+            path=("paths", "/foo", "get", "security", 0, "baz"),
+            reason="'not-a-list' is not of type 'array'",
+            type="Json schema validator error",
+        ),
+        ReferenceNotFoundValidationError(
+            path=("paths", "/foo", "get", "responses", "200", "$ref"),
+            reason="reference '#/definitions/some-definition' does not exist",
+            type="Reference not found",
+        ),
+        SecurityDefinitionNotFoundValidationError(
+            path=("paths", "/foo", "get", "security", "[0]", "baz"),
+            reason="securityDefinitions 'baz' does not exist",
+            type="Security definition not found",
+        ),
     }
 
 
@@ -323,7 +345,7 @@ paths:
         200:
           description: OK
       security:
-      - sec1: []
+      - sec1: "not-a-list"
         sec2: [not-existing-scope]
       - sec3: [existing-scope]
       - sec-not-exist: []

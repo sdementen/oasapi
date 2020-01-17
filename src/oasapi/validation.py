@@ -52,8 +52,10 @@ def check_security(swagger: Dict):
         else:
             # retrieve scopes declared in the secdef
             declared_scopes = secdef.get("scopes", [])
+
             if not isinstance(scopes, list):
                 continue
+
             # verify scopes can be resolved
             for scope in scopes:
                 if scope not in declared_scopes:

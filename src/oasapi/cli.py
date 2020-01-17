@@ -75,13 +75,44 @@ class FileURL:
         if isinstance(content, bytes):
             content = content.decode("utf-8")
 
-        return cls(url=value, content=content)
+        return FileURL(url=value, content=content)
+
+
+@dataclass
+class SwaggerFileURL(FileURL):
+    swagger: str
+
+    @classmethod
+    def open_url(cls, ctx, param, value) -> "SwaggerFileURL":
+        file_url = super().open_url(ctx, param, value)
+
+        file_content = file_url.content
+        if file_content.startswith("{"):
+            # this is a json file
+            try:
+                swagger = json.loads(file_content)
+            except json.JSONDecodeError:
+                swagger = None
+        else:
+            # this is a yaml file
+            try:
+                swagger = yaml.safe_load(file_content)
+            except yaml.YAMLError:
+                swagger = None
+
+        if swagger is None:
+            raise click.ClickException(
+                f"Could not parse json/yaml swagger from '{file_url.url}' "
+                f"with content {shorten_text(file_url.content, 15, 10)}"
+            )
+
+        return cls(swagger=swagger, url=file_url.url, content=file_url.content)
 
 
 @main.command(name="validate")
-@click.argument("swagger_fileurl", callback=FileURL.open_url, metavar="SWAGGER")
+@click.argument("swagger_fileurl", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
-def validate(swagger_fileurl: FileURL, verbose):
+def validate(swagger_fileurl: SwaggerFileURL, verbose):
     """Validate the SWAGGER file.
 
     SWAGGER is the path to the swagger file, in json or yaml format.
@@ -89,55 +120,35 @@ def validate(swagger_fileurl: FileURL, verbose):
     if verbose > 0:
         logging.basicConfig(level=logging.DEBUG)
 
-    file_content = swagger_fileurl.content
-    if file_content.startswith("{"):
-        # this is a json file
-        try:
-            swagger = json.loads(file_content)
-        except json.JSONDecodeError:
-            swagger = None
-    else:
-        # this is a yaml file
-        try:
-            swagger = yaml.safe_load(file_content)
-        except yaml.YAMLError:
-            swagger = None
-
-    if swagger is None:
-        raise click.ClickException(
-            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' "
-            f"with content {shorten_text(swagger_fileurl.content, 15, 10)}"
-        )
+    swagger = swagger_fileurl.swagger
 
     with Timer("swagger validation"):
         errors = oasapi.validate_swagger(swagger)
 
     if errors:
         # display error messages and exit with code = 1
-        click.echo(
-            click.style(
-                f"The swagger is not valid. Following {len(errors)} errors have been detected:",
-                fg="red",
-            )
+        click.secho(
+            f"The swagger is not valid. Following {len(errors)} errors have been detected:",
+            fg="red",
+            err=True,
         )
         for error in sorted(errors, key=lambda error: str(error)):
-            click.echo(
-                click.style(
-                    f"- {error.type} @ '{error.format_path(error.path)}' -> {error.reason}",
-                    fg="red",
-                )
+            click.secho(
+                f"- {error.type} @ '{error.format_path(error.path)}' -> {error.reason}",
+                fg="red",
+                err=True,
             )
         sys.exit(1)
     else:
         # informs everything OK
-        click.echo(click.style("The swagger is valid.", fg="green"))
+        click.secho("The swagger is valid.", fg="green", err=True)
 
 
 @main.command(name="prune")
-@click.argument("swagger_fileurl", callback=FileURL.open_url, metavar="SWAGGER")
+@click.argument("swagger_fileurl", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
 @click.option("-o", "--output", help="Path to write the pruned swagger", type=click.File("w"))
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
-def prune(swagger_fileurl: FileURL, output, verbose):
+def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
     """Prune unused global definitions/responses/parameters and unused securityDefinition/scopes from the swagger.
 
     SWAGGER is the path to the swagger file, in json or yaml format.
@@ -145,25 +156,7 @@ def prune(swagger_fileurl: FileURL, output, verbose):
     if verbose > 0:
         logging.basicConfig(level=logging.DEBUG)
 
-    file_content = swagger_fileurl.content
-    if file_content.startswith("{"):
-        # this is a json file
-        try:
-            swagger = json.loads(file_content)
-        except json.JSONDecodeError:
-            swagger = None
-    else:
-        # this is a yaml file
-        try:
-            swagger = yaml.safe_load(file_content)
-        except yaml.YAMLError:
-            swagger = None
-
-    if swagger is None:
-        raise click.ClickException(
-            f"Could not parse json/yaml swagger from '{swagger_fileurl.url}' "
-            f"with content {shorten_text(swagger_fileurl.content, 15, 10)}"
-        )
+    swagger = swagger_fileurl.swagger
 
     with Timer("swagger pruning"):
         swagger, actions = oasapi.prune_unused_global_items(swagger)
@@ -175,17 +168,13 @@ def prune(swagger_fileurl: FileURL, output, verbose):
 
     if actions:
         # display error messages and exit with code = 1
-        click.echo(
-            click.style(f"The swagger has been pruned of {len(actions)} elements:", fg="red")
-        )
+        click.secho(f"The swagger has been pruned of {len(actions)} elements:", fg="red", err=True)
         for action in sorted(actions, key=lambda error: str(error)):
-            click.echo(
-                click.style(
-                    f"- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",
-                    fg="red",
-                )
+            click.secho(
+                f"- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",
+                fg="red",
+                err=True,
             )
-        sys.exit(1)
     else:
         # informs everything OK
-        click.echo(click.style("The swagger had no unused elements.", fg="green"))
+        click.secho("The swagger had no unused elements.", fg="green", err=True)

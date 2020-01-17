@@ -68,6 +68,13 @@ def test_prune_unused_references():
     }
 
 
+def test_prune_unused_security_definitions_empty():
+    swagger = {"foo": "baz"}
+    swagger_pruned, actions = prune_unused_security_definitions(swagger)
+    assert swagger == swagger_pruned
+    assert not actions
+
+
 def test_prune_unused_security_definitions():
     swagger_str = """
 swagger: '2.0'
