@@ -3,7 +3,7 @@ from typing import Iterable, Union, Dict, Tuple
 from attr import dataclass
 
 #: the type of a swagger path
-SwaggerPath = Tuple[str, ...]
+SwaggerPath = Tuple[Union[int, str], ...]
 
 
 @dataclass(frozen=True)
@@ -88,6 +88,16 @@ class ReferenceNotUsedFilterAction(FilterAction):
 
 
 @dataclass(frozen=True)
+class SecurityDefinitionNotUsedAction(FilterAction):
+    type: str = "Security definition removed"
+
+
+@dataclass(frozen=True)
+class OAuth2ScopeNotUsedAction(FilterAction):
+    type: str = "Oauth2 scope removed"
+
+
+@dataclass(frozen=True)
 class TagNotUsedFilterAction(FilterAction):
     type: str = "Tag filtered out"
 
@@ -156,6 +166,20 @@ class ReferenceNotFoundValidationError(ValidationError):
     """An error on a reference used but not found"""
 
     type: str = "Reference not found"
+
+
+@dataclass(frozen=True)
+class ReferenceInvalidSyntax(ValidationError):
+    """An error on a reference that has not a valid syntax"""
+
+    type: str = "Reference invalid syntax"
+
+
+@dataclass(frozen=True)
+class ReferenceInvalidSection(ValidationError):
+    """An error on a reference that refers to a invalid section"""
+
+    type: str = "Reference invalid section"
 
 
 @dataclass(frozen=True)

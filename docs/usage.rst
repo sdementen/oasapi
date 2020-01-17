@@ -1,13 +1,15 @@
-=====
-Usage
-=====
+==================
+Usage with the CLI
+==================
 
-Command line interface
-----------------------
+Introduction
+------------
 
-oasapi offers a CLI to run core commands:
+oasapi offers a command line interface (CLI) to run core operations:
 
 .. command-output:: python -m oasapi
+
+All these operation are also available programmatically through the :ref:`oasapi-package` package.
 
 Alternatively to the syntax hereabove, you can call oasapi through the oasapi script:
 
@@ -15,24 +17,60 @@ Alternatively to the syntax hereabove, you can call oasapi through the oasapi sc
 
 And there is also a docker image ``sdementen/oasapi`` offering the same script through ``docker run sdementen/oasapi``
 
-Validating an OAS 2.0 (aka swagger) file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Help is available with the ``--help`` option:
 
-The `validate` command will validate a file given as parameter
+.. command-output:: oasapi --help
 
-.. command-output:: python -m oasapi validate --help
+.. command-output:: oasapi validate --help
+
+
+Specifying an OAS 2.0 (aka swagger) file
+----------------------------------------
+
+The `oasapi` commands will often require an OAS 2.0 Document (aka swagger).
+The swagger can be given in JSON or YAML format and can be a local file or a URL.
 
 Example of usage (YAML file)
 
-.. command-output:: python -m oasapi validate samples/swagger_petstore.yaml
+.. command-output:: oasapi validate samples/swagger_petstore.yaml
 
 Example of usage (JSON file):
 
-.. command-output:: python -m oasapi validate samples/swagger_petstore.json
-.. command-output:: python -m oasapi validate samples/swagger_petstore_with_errors.json
-   :returncode: 1
+.. command-output:: oasapi validate samples/swagger_petstore.json
 
 Example of usage (JSON URL)
 
-.. command-output:: python -m oasapi validate http://petstore.swagger.io/v2/swagger.json
+.. command-output:: oasapi validate http://petstore.swagger.io/v2/swagger.json
 
+Validating an OAS 2.0 Document
+------------------------------
+
+Validating is an operation that will check the swagger for errors::
+
+ - structural errors, i.e. errors coming from the swagger not complying with the swagger JSON schema
+ - semantic errors, i.e. errors beyond the structural ones (e.g. duplicate operationIds)
+
+
+You can validate a document with the ``validate`` command:
+
+.. command-output:: oasapi validate samples/swagger_petstore.json
+.. command-output:: oasapi validate samples/swagger_petstore_with_errors.json
+   :returncode: 1
+
+
+Pruning an OAS 2.0 Document
+---------------------------
+
+Pruning is an operation that will 'clean' the swagger by removing any unused elements::
+
+ - global definitions not referenced
+ - global parameters not referenced
+ - global responses not referenced
+ - securityDefinitions not used
+ - securityDefinitions oauth2 scopes not used
+
+You can prune a document with the ``prune`` command:
+
+.. command-output:: oasapi validate samples/swagger_petstore.json
+.. command-output:: oasapi validate samples/swagger_petstore_with_errors.json
+   :returncode: 1

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from oasapi.cli import validate, shorten_text, main
+from oasapi.cli import validate, shorten_text, main, prune
 
 
 def test_shorten_text():
@@ -27,6 +27,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  prune     Prune unused global definitions/responses/parameters and unused...
   validate  Validate the SWAGGER file.
 """
     )
@@ -49,6 +50,29 @@ def test_validate_help():
 Options:
   -v, --verbose  Make the operation more talkative
   --help         Show this message and exit.
+"""
+    )
+    assert result.exit_code == 0
+
+
+def test_prune_help():
+    runner = CliRunner()
+    result = runner.invoke(prune, ["--help"])
+    print(result.output)
+    assert (
+        result.output
+        == """Usage: prune [OPTIONS] SWAGGER
+
+  Prune unused global definitions/responses/parameters and unused
+  securityDefinition/scopes from the swagger.
+
+  SWAGGER is the path to the swagger file, in json or yaml format. It can be a
+  file path, an URL or a dash (-) for the stdin
+
+Options:
+  -o, --output FILENAME  Path to write the pruned swagger
+  -v, --verbose          Make the operation more talkative
+  --help                 Show this message and exit.
 """
     )
     assert result.exit_code == 0
@@ -85,7 +109,7 @@ def test_validate_nok_notexistant_url():
 def test_validate_ok_stdin():
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
-    result = runner.invoke(validate, ["-"], input=json.dumps(swagger))
+    result = runner.invoke(validate, ["-", "-v"], input=json.dumps(swagger))
 
     assert result.output == "The swagger is valid.\n"
     assert result.exit_code == 0
@@ -123,11 +147,12 @@ def test_validate_nok():
     result = runner.invoke(validate, [str(swagger_path)])
 
     assert result.output == (
-        "The swagger is not valid. Following 5 errors have been detected:\n"
+        "The swagger is not valid. Following 6 errors have been detected:\n"
         "- Duplicate operationId @ 'paths./pet/findByStatus.get.operationId' "
         "-> the operationId 'updatePet' is already used in an endpoint\n"
         "- Json schema validator error @ 'info' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"
         "- Json schema validator error @ 'paths./pet.post' -> 'responses' is a required property\n"
+        "- Json schema validator error @ 'paths./pet/findByStatus.get.security.0.petstore_auth' -> 1 is not of type 'array'\n"
         "- Json schema validator error @ 'schemes.1' -> 'ftp' is not one of ['http', 'https', 'ws', 'wss']\n"
         "- Security scope not found @ 'paths./pet.put.security.[0].petstore_auth.think:pets' -> "
         "scope think:pets is not declared in the scopes of the securityDefinitions 'petstore_auth'\n"
@@ -140,3 +165,60 @@ def test_validate_nofile():
     result = runner.invoke(validate, [])
 
     assert result.exit_code == 2
+
+
+def test_prune_no_pruning_stdin():
+    runner = CliRunner()
+    swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
+    result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
+
+    assert result.output == "The swagger had no unused elements.\n"
+    assert result.exit_code == 0
+
+
+def test_prune_ok_stdin():
+    runner = CliRunner()
+    swagger = dict(
+        swagger="2.0",
+        paths={},
+        info=dict(title="my API", version="v1.0"),
+        definitions={"unused": {}},
+    )
+    result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
+
+    assert (
+        result.output
+        == """The swagger has been pruned of 1 elements:
+- Reference filtered out @ 'definitions.unused' -> reference not used
+"""
+    )
+    assert result.exit_code == 0
+
+
+def test_prune_nok_swagger_invalid():
+    runner = CliRunner()
+    swagger_path = (
+        Path(__file__).parent.parent / "docs" / "samples" / "swagger_petstore_with_errors.json"
+    )
+    result = runner.invoke(prune, [str(swagger_path)])
+
+    assert result.output == (
+        "The swagger could not been pruned as it is invalid. Please ensure the "
+        "swagger is valid before pruning it.\n"
+    )
+    assert result.exit_code == 1
+
+
+def test_prune_output_swagger_stdin():
+    runner = CliRunner()
+    swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
+
+    file_output = "output.json"
+    with runner.isolated_filesystem() as fld:
+        fld = Path(fld)
+        result = runner.invoke(prune, ["-", "-o", file_output], input=json.dumps(swagger))
+        assert list(fld.iterdir()) == [fld / file_output]
+        assert (Path(fld) / file_output).read_text() == json.dumps(swagger, indent=2)
+
+    assert result.output == "The swagger had no unused elements.\n"
+    assert result.exit_code == 0

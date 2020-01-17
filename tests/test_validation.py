@@ -7,6 +7,8 @@ from oasapi.events import (
     ParameterDefinitionValidationError,
     SecurityDefinitionNotFoundValidationError,
     OAuth2ScopeNotFoundInSecurityDefinitionValidationError,
+    ReferenceInvalidSection,
+    ReferenceInvalidSyntax,
 )
 from oasapi.validation import (
     validate_swagger,
@@ -57,7 +59,14 @@ swagger: '2.0'
 info:
   version: 1.0
   title: my api
-paths: {}
+paths:
+  /foo:
+    get:
+      responses:
+        "200":
+          $ref: "#/definitions/some-definition"
+      security:
+      - baz: "not-a-list"
 """
     swagger = yaml.safe_load(swagger_str)
     results = validate_swagger(swagger)
@@ -68,7 +77,22 @@ paths: {}
             path=("info", "version"),
             reason="1.0 is not of type 'string'",
             type="Json schema validator error",
-        )
+        ),
+        JsonSchemaValidationError(
+            path=("paths", "/foo", "get", "security", 0, "baz"),
+            reason="'not-a-list' is not of type 'array'",
+            type="Json schema validator error",
+        ),
+        ReferenceNotFoundValidationError(
+            path=("paths", "/foo", "get", "responses", "200", "$ref"),
+            reason="reference '#/definitions/some-definition' does not exist",
+            type="Reference not found",
+        ),
+        SecurityDefinitionNotFoundValidationError(
+            path=("paths", "/foo", "get", "security", "[0]", "baz"),
+            reason="securityDefinitions 'baz' does not exist",
+            type="Security definition not found",
+        ),
     }
 
 
@@ -88,6 +112,10 @@ paths:
           $ref: "#/definitions/some-not-existing-definition"
         400:
           $ref: "#/responses/some-response"
+        500:
+          $ref: "#/badly-formed"
+        600:
+           $ref: "#/info/version"
 definitions:
   some-definition: {}
 responses:
@@ -99,11 +127,21 @@ responses:
 
     results = check_references(swagger)
     assert results == {
+        ReferenceInvalidSection(
+            path=("paths", "/foo", "get", "responses", 600, "$ref"),
+            reason="Reference #/info/version not referring to one of the sections ['definitions', 'responses', 'parameters']",
+            type="Reference invalid section",
+        ),
+        ReferenceInvalidSyntax(
+            path=("paths", "/foo", "get", "responses", 500, "$ref"),
+            reason="reference #/badly-formed not of the form '#/section/item'",
+            type="Reference invalid syntax",
+        ),
         ReferenceNotFoundValidationError(
-            path=("paths", "/foo", "get", "responses", 300),
+            path=("paths", "/foo", "get", "responses", 300, "$ref"),
             reason="reference '#/definitions/some-not-existing-definition' does not exist",
             type="Reference not found",
-        )
+        ),
     }
 
 
@@ -307,7 +345,7 @@ paths:
         200:
           description: OK
       security:
-      - sec1: []
+      - sec1: "not-a-list"
         sec2: [not-existing-scope]
       - sec3: [existing-scope]
       - sec-not-exist: []

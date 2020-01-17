@@ -10,8 +10,7 @@ from typing import Set, Dict
 from jsonpath_ng import parse, Union
 from jsonschema import Draft4Validator
 
-from oasapi.common import get_elements, OPERATIONS_LOWER
-from .common import extract_references
+from oasapi.common import get_elements, OPERATIONS_LOWER, REFERENCE_SECTIONS
 from .events import (
     ReferenceNotFoundValidationError,
     ParameterDefinitionValidationError,
@@ -20,6 +19,8 @@ from .events import (
     DuplicateOperationIdValidationError,
     JsonSchemaValidationError,
     ValidationError,
+    ReferenceInvalidSyntax,
+    ReferenceInvalidSection,
 )
 
 
@@ -51,8 +52,10 @@ def check_security(swagger: Dict):
         else:
             # retrieve scopes declared in the secdef
             declared_scopes = secdef.get("scopes", [])
+
             if not isinstance(scopes, list):
                 continue
+
             # verify scopes can be resolved
             for scope in scopes:
                 if scope not in declared_scopes:
@@ -153,21 +156,41 @@ def check_references(swagger: Dict):
     :param swagger:
     :return:
     """
-    reference_types = {"definitions", "responses", "securityDefinitions", "parameters"}
-
-    refs = extract_references(swagger)
     events = set()
 
-    for rt, obj, path in refs:
-        assert rt in reference_types, f"Unknown reference type {rt}"
-        try:
-            swagger[rt][obj]
-        except KeyError:
-            events.add(
-                ReferenceNotFoundValidationError(
-                    path=path, reason=f"reference '#/{rt}/{obj}' does not exist"
+    ref_jspath = parse("$..'$ref'")
+
+    for _, reference, path in get_elements(swagger, ref_jspath):
+        # handle only local references
+        if reference.startswith("#/"):
+            # decompose reference (error if not possible)
+            try:
+                rt, obj = reference[2:].split("/")
+            except ValueError:
+                events.add(
+                    ReferenceInvalidSyntax(
+                        path=path, reason=f"reference {reference} not of the form '#/section/item'"
+                    )
                 )
-            )
+                continue
+
+            if rt not in REFERENCE_SECTIONS:
+                events.add(
+                    ReferenceInvalidSection(
+                        path=path,
+                        reason=f"Reference {reference} not referring to one of the sections {REFERENCE_SECTIONS}",
+                    )
+                )
+
+            # resolve reference (error if not possible)
+            try:
+                swagger[rt][obj]
+            except KeyError:
+                events.add(
+                    ReferenceNotFoundValidationError(
+                        path=path, reason=f"reference '#/{rt}/{obj}' does not exist"
+                    )
+                )
 
     return events
 
