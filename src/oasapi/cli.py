@@ -159,9 +159,26 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
     swagger = swagger_fileurl.swagger
 
     with Timer("swagger pruning"):
-        swagger, actions = oasapi.prune_unused_global_items(swagger)
-        swagger, actions_bis = oasapi.prune_unused_security_definitions(swagger)
-        actions += actions_bis
+        try:
+            swagger, actions = oasapi.prune_unused_global_items(swagger)
+            swagger, actions_bis = oasapi.prune_unused_security_definitions(swagger)
+            actions += actions_bis
+        except Exception as e:
+            # something wrong happened, check if due to invalid swagger
+            if oasapi.validate_swagger(swagger):
+                click.secho(
+                    f"The swagger could not been pruned as it is invalid. Please ensure the swagger is valid before pruning it.",
+                    fg="red",
+                    err=True,
+                )
+            else:  # pragma: no cover
+                # should not happen
+                click.secho(
+                    f"The swagger could not been pruned due to an unhandled exception ({e}). Please fill an issue.",
+                    fg="red",
+                    err=True,
+                )
+            sys.exit(1)
 
     if output:
         output.write(json.dumps(swagger, indent=2))

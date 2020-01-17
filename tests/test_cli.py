@@ -152,6 +152,7 @@ def test_validate_nok():
         "-> the operationId 'updatePet' is already used in an endpoint\n"
         "- Json schema validator error @ 'info' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"
         "- Json schema validator error @ 'paths./pet.post' -> 'responses' is a required property\n"
+        "- Json schema validator error @ 'paths./pet/findByStatus.get.security.0.petstore_auth' -> 1 is not of type 'array'\n"
         "- Json schema validator error @ 'schemes.1' -> 'ftp' is not one of ['http', 'https', 'ws', 'wss']\n"
         "- Security scope not found @ 'paths./pet.put.security.[0].petstore_auth.think:pets' -> "
         "scope think:pets is not declared in the scopes of the securityDefinitions 'petstore_auth'\n"
@@ -192,6 +193,20 @@ def test_prune_ok_stdin():
 """
     )
     assert result.exit_code == 0
+
+
+def test_prune_nok_swagger_invalid():
+    runner = CliRunner()
+    swagger_path = (
+        Path(__file__).parent.parent / "docs" / "samples" / "swagger_petstore_with_errors.json"
+    )
+    result = runner.invoke(prune, [str(swagger_path)])
+
+    assert result.output == (
+        "The swagger could not been pruned as it is invalid. Please ensure the "
+        "swagger is valid before pruning it.\n"
+    )
+    assert result.exit_code == 1
 
 
 def test_prune_output_swagger_stdin():
