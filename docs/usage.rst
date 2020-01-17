@@ -68,6 +68,7 @@ Pruning is an operation that will 'clean' the swagger by removing any unused ele
  - global responses not referenced
  - securityDefinitions not used
  - securityDefinitions oauth2 scopes not used
+ - tags not used
 
 You can prune a document with the ``prune`` command:
 
