@@ -88,18 +88,18 @@ class ReferenceNotUsedFilterAction(FilterAction):
 
 
 @dataclass(frozen=True)
-class SecurityDefinitionNotUsedAction(FilterAction):
+class SecurityDefinitionNotUsedFilterAction(FilterAction):
     type: str = "Security definition removed"
 
 
 @dataclass(frozen=True)
-class OAuth2ScopeNotUsedAction(FilterAction):
+class OAuth2ScopeNotUsedFilterAction(FilterAction):
     type: str = "Oauth2 scope removed"
 
 
 @dataclass(frozen=True)
 class TagNotUsedFilterAction(FilterAction):
-    type: str = "Tag filtered out"
+    type: str = "Tag definition removed"
 
 
 @dataclass(frozen=True)

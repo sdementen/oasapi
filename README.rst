@@ -59,14 +59,14 @@ Overview
 
 .. end-badges
 
-Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling:
+Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling you to:
 
- - validation of an OAS 2.0 document
+ - validate an OAS 2.0 document
  - prune an OAS 2.0 document of its unused elements
  - [todo] control backward compatibility between two OAS 2.0 documents
- - [todo] rewriting the basePath and paths of an OAS 2.0 document
- - [todo] filtering endpoints of an OAS 2.0 document to generate a subset of the API
- - [todo] adding/removing securityDefinitions on an OAS 2.0 document
+ - [todo] rewrite the basePath and paths of an OAS 2.0 document
+ - [todo] filter endpoints of an OAS 2.0 document to generate a subset of the API
+ - [todo] add/remove securityDefinitions on an OAS 2.0 document
 
 Free software license: BSD 3-Clause License
 

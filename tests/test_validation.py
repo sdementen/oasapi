@@ -11,7 +11,8 @@ from oasapi.events import (
     ReferenceInvalidSyntax,
 )
 from oasapi.validation import (
-    validate_swagger,
+    validate,
+    check_schema,
     check_references,
     detect_duplicate_operationId,
     check_parameters,
@@ -29,7 +30,7 @@ info:
 paths: {}
 """
     swagger = yaml.safe_load(swagger_str)
-    results = validate_swagger(swagger)
+    results = validate(swagger)
 
     # no error in this basic test
     assert results == set()
@@ -37,7 +38,7 @@ paths: {}
 
 def test_empty_swagger():
     """This is the minimal testing"""
-    results = validate_swagger({})
+    results = validate({})
 
     # no error in this basic test
     assert results == {
@@ -69,7 +70,7 @@ paths:
       - baz: "not-a-list"
 """
     swagger = yaml.safe_load(swagger_str)
-    results = validate_swagger(swagger)
+    results = validate(swagger)
 
     # no error in this basic test
     assert results == {
@@ -92,6 +93,39 @@ paths:
             path=("paths", "/foo", "get", "security", "[0]", "baz"),
             reason="securityDefinitions 'baz' does not exist",
             type="Security definition not found",
+        ),
+    }
+
+
+def test_check_schema():
+    swagger_str = """
+swagger: '2.0'
+info:
+  version: 1.0
+  title: my api
+paths:
+  /foo:
+    get:
+      responses:
+        "200":
+          $ref: "#/definitions/some-definition"
+      security:
+      - baz: "not-a-list"
+    """
+    swagger = yaml.safe_load(swagger_str)
+    results = check_schema(swagger)
+
+    # no error in this basic test
+    assert results == {
+        JsonSchemaValidationError(
+            path=("info", "version"),
+            reason="1.0 is not of type 'string'",
+            type="Json schema validator error",
+        ),
+        JsonSchemaValidationError(
+            path=("paths", "/foo", "get", "security", 0, "baz"),
+            reason="'not-a-list' is not of type 'array'",
+            type="Json schema validator error",
         ),
     }
 

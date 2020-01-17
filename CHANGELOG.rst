@@ -5,7 +5,8 @@ Changelog
 0.1.12 (2020-01-17)
 -------------------
 
-* add pruning of unused items (definitions, responses, parameters, securityDefinitions/scopes)
+* add pruning of unused items (definitions, responses, parameters, securityDefinitions/scopes, tags)
+* rename validate_swagger function to validate, add prune function
 
 0.1.11 (2020-01-16)
 -------------------

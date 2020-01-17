@@ -123,7 +123,7 @@ def validate(swagger_fileurl: SwaggerFileURL, verbose):
     swagger = swagger_fileurl.swagger
 
     with Timer("swagger validation"):
-        errors = oasapi.validate_swagger(swagger)
+        errors = oasapi.validate(swagger)
 
     if errors:
         # display error messages and exit with code = 1
@@ -149,7 +149,7 @@ def validate(swagger_fileurl: SwaggerFileURL, verbose):
 @click.option("-o", "--output", help="Path to write the pruned swagger", type=click.File("w"))
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
 def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
-    """Prune unused global definitions/responses/parameters and unused securityDefinition/scopes from the swagger.
+    """Prune unused global definitions/responses/parameters, unused securityDefinition/scopes and unused tags from the swagger.
 
     SWAGGER is the path to the swagger file, in json or yaml format.
     It can be a file path, an URL or a dash (-) for the stdin"""
@@ -165,7 +165,7 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
             actions += actions_bis
         except Exception as e:
             # something wrong happened, check if due to invalid swagger
-            if oasapi.validate_swagger(swagger):
+            if oasapi.validate(swagger):
                 click.secho(
                     f"The swagger could not been pruned as it is invalid. Please ensure the swagger is valid before pruning it.",
                     fg="red",

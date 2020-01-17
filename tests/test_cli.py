@@ -27,7 +27,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  prune     Prune unused global definitions/responses/parameters and unused...
+  prune     Prune unused global definitions/responses/parameters, unused...
   validate  Validate the SWAGGER file.
 """
     )
@@ -63,8 +63,8 @@ def test_prune_help():
         result.output
         == """Usage: prune [OPTIONS] SWAGGER
 
-  Prune unused global definitions/responses/parameters and unused
-  securityDefinition/scopes from the swagger.
+  Prune unused global definitions/responses/parameters, unused
+  securityDefinition/scopes and unused tags from the swagger.
 
   SWAGGER is the path to the swagger file, in json or yaml format. It can be a
   file path, an URL or a dash (-) for the stdin

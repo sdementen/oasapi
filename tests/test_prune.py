@@ -1,11 +1,19 @@
+import copy
+
 import yaml
 
 from oasapi.events import (
     ReferenceNotUsedFilterAction,
-    OAuth2ScopeNotUsedAction,
-    SecurityDefinitionNotUsedAction,
+    OAuth2ScopeNotUsedFilterAction,
+    SecurityDefinitionNotUsedFilterAction,
+    TagNotUsedFilterAction,
 )
-from oasapi.transform import prune_unused_global_items, prune_unused_security_definitions
+from oasapi.prune import (
+    prune_unused_global_items,
+    prune_unused_security_definitions,
+    prune_unused_tags,
+    prune,
+)
 
 
 def test_prune_unused_references():
@@ -70,7 +78,7 @@ def test_prune_unused_references():
 
 def test_prune_unused_security_definitions_empty():
     swagger = {"foo": "baz"}
-    swagger_pruned, actions = prune_unused_security_definitions(swagger)
+    swagger_pruned, actions = prune_unused_security_definitions(copy.deepcopy(swagger))
     assert swagger == swagger_pruned
     assert not actions
 
@@ -147,18 +155,153 @@ securityDefinitions:
         "swagger": "2.0",
     }
     assert actions == [
-        SecurityDefinitionNotUsedAction(
+        SecurityDefinitionNotUsedFilterAction(
             path=("securityDefinitions", "sec2"),
             reason="security definition not used",
             type="Security definition removed",
         ),
-        SecurityDefinitionNotUsedAction(
+        SecurityDefinitionNotUsedFilterAction(
             path=("securityDefinitions", "sec-not-used"),
             reason="security definition not used",
             type="Security definition removed",
         ),
-        OAuth2ScopeNotUsedAction(
+        OAuth2ScopeNotUsedFilterAction(
             path=("securityDefinitions", "sec3", "scopes", "not-used-scope"),
+            reason="oauth2 scope not used",
+            type="Oauth2 scope removed",
+        ),
+    ]
+
+
+def test_prune_unused_tags():
+    swagger_str = swagger_str = """
+swagger: '2.0'
+info:
+  version: v1.0
+  title: my api
+paths:
+  /foo:
+    get:
+      responses:
+        200:
+          description: OK
+      tags: [one, two, three]
+    patch:
+      responses:
+        200:
+          description: OK
+      tags: [one, four]
+    put:
+      responses:
+        200:
+          description: OK
+      tags: []
+    parameters:
+      tags: [not-a-tag]
+    tags: [not-a-tag]
+  tags: [not-a-tag]
+tags:
+- name: one
+  description: f
+  externalDocs:
+    url: http://foo.com
+- name: two
+  description: f
+- name: three
+- name: not-used
+- name: not-a-tag
+"""
+    swagger = yaml.safe_load(swagger_str)
+    swagger_pruned, actions = prune_unused_tags(copy.deepcopy(swagger))
+    assert swagger_pruned["tags"] == [
+        {"description": "f", "externalDocs": {"url": "http://foo.com"}, "name": "one"},
+        {"description": "f", "name": "two"},
+        {"name": "three"},
+    ]
+    assert actions == [
+        TagNotUsedFilterAction(
+            path=("tags", "[3]"),
+            reason="tag definition for 'not-used' not used",
+            type="Tag definition removed",
+        ),
+        TagNotUsedFilterAction(
+            path=("tags", "[4]"),
+            reason="tag definition for 'not-a-tag' not used",
+            type="Tag definition removed",
+        ),
+    ]
+
+
+def test_prune_no_tags():
+    swagger = {"foo": "baz"}
+    swagger_pruned, actions = prune_unused_tags(copy.deepcopy(swagger))
+    assert swagger == swagger_pruned
+    assert not actions
+
+
+def test_prune_each_type():
+    swagger_str = """
+swagger: '2.0'
+info:
+  version: v1.0
+  title: my api
+paths:
+  /foo:
+    get:
+      responses:
+        200:
+          description: OK
+      tags: [one, two, three]
+      security:
+      - two: []
+tags:
+- name: not-used
+securityDefinitions:
+  one:
+    type: basic
+  two:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: http://foo.com
+    scopes:
+      one: my scope one
+parameters:
+  one:
+    in: query
+    name: one
+    type: integer
+responses:
+  one:
+    description: hello
+definitions:
+  one: {}
+"""
+    swagger = yaml.safe_load(swagger_str)
+    swagger_pruned, actions = prune(swagger)
+
+    assert swagger != swagger_pruned
+    assert actions == [
+        TagNotUsedFilterAction(
+            path=("tags", "[0]"),
+            reason="tag definition for 'not-used' not used",
+            type="Tag definition removed",
+        ),
+        ReferenceNotUsedFilterAction(
+            path=("definitions", "one"), reason="reference not used", type="Reference filtered out"
+        ),
+        ReferenceNotUsedFilterAction(
+            path=("responses", "one"), reason="reference not used", type="Reference filtered out"
+        ),
+        ReferenceNotUsedFilterAction(
+            path=("parameters", "one"), reason="reference not used", type="Reference filtered out"
+        ),
+        SecurityDefinitionNotUsedFilterAction(
+            path=("securityDefinitions", "one"),
+            reason="security definition not used",
+            type="Security definition removed",
+        ),
+        OAuth2ScopeNotUsedFilterAction(
+            path=("securityDefinitions", "two", "scopes", "one"),
             reason="oauth2 scope not used",
             type="Oauth2 scope removed",
         ),
