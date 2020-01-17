@@ -17,6 +17,7 @@ Why does this file exist, and why not put this in __main__?
 import json
 import logging
 import sys
+from typing import Dict
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
 
@@ -80,7 +81,7 @@ class FileURL:
 
 @dataclass
 class SwaggerFileURL(FileURL):
-    swagger: str
+    swagger: Dict
 
     @classmethod
     def open_url(cls, ctx, param, value) -> "SwaggerFileURL":
@@ -160,9 +161,7 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
 
     with Timer("swagger pruning"):
         try:
-            swagger, actions = oasapi.prune_unused_global_items(swagger)
-            swagger, actions_bis = oasapi.prune_unused_security_definitions(swagger)
-            actions += actions_bis
+            swagger, actions = oasapi.prune(swagger)
         except Exception as e:
             # something wrong happened, check if due to invalid swagger
             if oasapi.validate(swagger):
