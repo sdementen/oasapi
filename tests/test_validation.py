@@ -150,6 +150,8 @@ paths:
           $ref: "#/badly-formed"
         600:
            $ref: "#/info/version"
+        700:
+           $ref: "https://some.external.reference.com/foo/baz"
 definitions:
   some-definition: {}
 responses:
