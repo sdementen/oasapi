@@ -355,6 +355,21 @@ paths:
       type: string
       format: byte
       default: "FV'()';:=FERT4DE()r'"
+    - name: param_string_customer_format
+      in: query
+      type: string
+      format: my-own-format
+      default: 45
+    - name: param_string_customer_format
+      in: query
+      type: string
+      format: my-own-format
+      default: "45"
+    - name: param_unknown_type
+      in: query
+      type: unknown_type
+      format: my-own-format
+      default: "45"
 """
     swagger = yaml.safe_load(swagger_str)
 
@@ -362,19 +377,19 @@ paths:
     assert results == {
         ParameterDefinitionValidationError(
             path=("parameters", "[0]", "default"),
-            reason="The default value 'error-on-parameter-definitions' has not the expected type 'integer'",
+            reason="The default value 'error-on-parameter-definitions' is not of the expected type 'integer'",
             parameter_name="param_int_bad",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "get", "parameters", "[0]", "default"),
-            reason="The default value 'error-on-operation-specific-definitions' has not the expected type 'integer'",
+            reason="The default value 'error-on-operation-specific-definitions' is not of the expected type 'integer'",
             parameter_name="param_int_bad",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[0]", "default"),
-            reason="The default value 'error-on-path-specific-definitions' has not the expected type 'integer'",
+            reason="The default value 'error-on-path-specific-definitions' is not of the expected type 'integer'",
             parameter_name="param_int_bad",
             type="Parameter definition error",
         ),
@@ -398,7 +413,7 @@ paths:
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[15]", "default"),
-            reason="The default value 45.0 has not the expected type 'integer'",
+            reason="The default value 45.0 is not of the expected type 'integer'",
             parameter_name="param_int_float",
             type="Parameter definition error",
         ),
@@ -409,20 +424,27 @@ paths:
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[20]", "default"),
+            reason="The default value 45 is not of the expected type 'string'",
+            parameter_name="param_string_customer_format",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[2]", "default"),
-            reason="The default value ['hello', 'world'] has not the expected type 'string'",
+            reason="The default value ['hello', 'world'] is not of the expected type 'string'",
             parameter_name="param_str",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[3]", "default"),
-            reason="The default value 1 has not the expected type 'string'",
+            reason="The default value 1 is not of the expected type 'string'",
             parameter_name="param_str",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[4]", "default"),
-            reason="The default value 'this-is-not-valid' is not one of the enum values ['there', 'are', 'valid', 'values']",
+            reason="The default value 'this-is-not-valid' is not one of "
+            "the enum values ['there', 'are', 'valid', 'values']",
             parameter_name="param_enum_wrong_default",
             type="Parameter definition error",
         ),

@@ -154,6 +154,10 @@ def _check_parameter(param: Dict, path_param):
     }
     if default is not None and _type:
         regexp_or_type = map_type2subtypes_pythontype.get((_type, format))
+        # if no match with both _type, format, check if match only on _type (format being freeform)
+        if not regexp_or_type:
+            regexp_or_type = map_type2subtypes_pythontype.get((_type, None))
+
         if regexp_or_type:
             # the type & format matches one of the Swagger Specifications documented type & format combinations
             # we can check the default format
@@ -172,7 +176,7 @@ def _check_parameter(param: Dict, path_param):
                 events.add(
                     ParameterDefinitionValidationError(
                         path=path_param + ("default",),
-                        reason=f"The default value {repr(default)} has not the expected type '{_type}'{f'({format})' if format else ''}",
+                        reason=f"The default value {repr(default)} is not of the expected type '{_type}'",
                         parameter_name=name,
                     )
                 )
