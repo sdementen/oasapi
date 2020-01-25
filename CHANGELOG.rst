@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.1.13 (dev)
-------------
+0.1.13 (2020-01-25)
+-------------------
 
 * add validation of parameters required/default
 * add validation of parameters default value wrt type/format
