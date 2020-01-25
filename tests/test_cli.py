@@ -149,7 +149,7 @@ def test_validate_nok():
     assert result.output == (
         "The swagger is not valid. Following 6 errors have been detected:\n"
         "- Duplicate operationId @ 'paths./pet/findByStatus.get.operationId' "
-        "-> the operationId 'updatePet' is already used in an endpoint\n"
+        "-> the operationId 'updatePet' is already used in an endpoint.\n"
         "- Json schema validator error @ 'info' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"
         "- Json schema validator error @ 'paths./pet.post' -> 'responses' is a required property\n"
         "- Json schema validator error @ 'paths./pet/findByStatus.get.security.0.petstore_auth' -> 1 is not of type 'array'\n"
