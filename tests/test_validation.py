@@ -225,14 +225,14 @@ operationId: this-is-not-a-unique-id
     assert results == {
         DuplicateOperationIdValidationError(
             path=("paths", "/foo", "patch", "operationId"),
-            reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint",
+            reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint.",
             operationId="this-is-not-a-unique-id",
             path_already_used=("paths", "/foo", "post", "operationId"),
             type="Duplicate operationId",
         ),
         DuplicateOperationIdValidationError(
             path=("paths", "/foo", "put", "operationId"),
-            reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint",
+            reason="the operationId 'this-is-not-a-unique-id' is already used in an endpoint.",
             operationId="this-is-not-a-unique-id",
             path_already_used=("paths", "/foo", "post", "operationId"),
             type="Duplicate operationId",
@@ -247,7 +247,7 @@ info:
   version: v1.0
   title: my api
 parameters:
-- name: param_int
+- name: param_int_bad
   in: query
   type: integer
   default: "error-on-parameter-definitions"
@@ -255,12 +255,16 @@ paths:
   /foo:
     get:
       parameters:
-      - name: param_int
+      - name: param_int_bad
         in: query
         type: integer
         default: "error-on-operation-specific-definitions"
 
     parameters:
+    - name: param_int_bad
+      in: query
+      type: integer
+      default: "error-on-path-specific-definitions"
     - name: param_int
       in: query
       type: integer
@@ -290,34 +294,176 @@ paths:
     - name: param_array
       in: query
       type: array
+    - name: param_str_date
+      in: query
+      type: string
+      format: date
+      default: "2012-01-22"
+    - name: param_str_date_bad
+      in: query
+      type: string
+      format: date
+      default: "2012-0001-22"
+    - name: param_str_datetime
+      in: query
+      type: string
+      format: dateTime
+      default: "2012-01-22T00:15:22Z"
+    - name: param_str_datetime_dad
+      in: query
+      type: string
+      format: dateTime
+      default: "2012-01-22T00:15:22GG"
+    - name: param_required_but_with_default
+      in: query
+      type: string
+      required: true
+      default: "should not be given"
+    - name: param_required_but_with_default_even_empty
+      in: query
+      type: string
+      required: true
+      default: ""
+    - name: param_int
+      in: query
+      type: integer
+      default: 45
+    - name: param_int_float
+      in: query
+      type: integer
+      default: 45.0
+    - name: param_float
+      in: query
+      type: number
+      default: 45.0
+    - name: param_float_int
+      in: query
+      type: number
+      default: 45
+    - name: param_base64
+      in: query
+      type: string
+      format: byte
+      default: |
+        TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlz
+        IHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2Yg
+        dGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGlu
+        dWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRo
+        ZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=
+    - name: param_base64_bad
+      in: query
+      type: string
+      format: byte
+      default: "FV'()';:=FERT4DE()r'"
+    - name: param_string_customer_format
+      in: query
+      type: string
+      format: my-own-format
+      default: 45
+    - name: param_string_customer_format
+      in: query
+      type: string
+      format: my-own-format
+      default: "45"
+    - name: param_unknown_type
+      in: query
+      type: unknown_type
+      format: my-own-format
+      default: "45"
 """
     swagger = yaml.safe_load(swagger_str)
 
     results = check_parameters(swagger)
     assert results == {
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[1]", "default"),
-            reason="The default value '['hello', 'world']' has not the expected type 'string'",
+            path=("parameters", "[0]", "default"),
+            reason="The default value 'error-on-parameter-definitions' is not of the expected type 'integer'",
+            parameter_name="param_int_bad",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "get", "parameters", "[0]", "default"),
+            reason="The default value 'error-on-operation-specific-definitions' is not of the expected type 'integer'",
+            parameter_name="param_int_bad",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[0]", "default"),
+            reason="The default value 'error-on-path-specific-definitions' is not of the expected type 'integer'",
+            parameter_name="param_int_bad",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[11]", "default"),
+            reason="The default value '2012-01-22T00:15:22GG' does not conform to the string format 'dateTime'",
+            parameter_name="param_str_datetime_dad",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[12]"),
+            reason="The parameter is required yet it has a default value",
+            parameter_name="param_required_but_with_default",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[13]"),
+            reason="The parameter is required yet it has a default value",
+            parameter_name="param_required_but_with_default_even_empty",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[15]", "default"),
+            reason="The default value 45.0 is not of the expected type 'integer'",
+            parameter_name="param_int_float",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[19]", "default"),
+            reason="The default value 'FV'()';:=FERT4DE()r'' does not conform to the string format 'byte'",
+            parameter_name="param_base64_bad",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[20]", "default"),
+            reason="The default value 45 is not of the expected type 'string'",
+            parameter_name="param_string_customer_format",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[2]", "default"),
-            reason="The default value '1' has not the expected type 'string'",
+            reason="The default value ['hello', 'world'] is not of the expected type 'string'",
+            parameter_name="param_str",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[3]", "default"),
-            reason="The default value 'this-is-not-valid' is not one of the enum values ['there', 'are', 'valid', 'values']",
+            reason="The default value 1 is not of the expected type 'string'",
+            parameter_name="param_str",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[5]", "enum"),
+            path=("paths", "/foo", "parameters", "[4]", "default"),
+            reason="The default value 'this-is-not-valid' is not one of "
+            "the enum values ['there', 'are', 'valid', 'values']",
+            parameter_name="param_enum_wrong_default",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[6]", "enum"),
             reason="The enum values ['there', 'are', 'duplicates', 'duplicates'] contains duplicate values",
+            parameter_name="param_enum_duplicates",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
-            path=("paths", "/foo", "parameters", "[6]"),
+            path=("paths", "/foo", "parameters", "[7]"),
             reason="The parameter is of type 'array' but is missing an 'items' field",
+            parameter_name="param_array",
+            type="Parameter definition error",
+        ),
+        ParameterDefinitionValidationError(
+            path=("paths", "/foo", "parameters", "[9]", "default"),
+            reason="The default value '2012-0001-22' does not conform to the string format 'date'",
+            parameter_name="param_str_date_bad",
             type="Parameter definition error",
         ),
     }
@@ -358,11 +504,13 @@ paths:
             path=("paths", "/foo", "parameters", "[1]", "items", "items", "default"),
             reason="The default value 'this-is-not-valid' is not one of the enum values "
             "['there', 'are', 'duplicate', 'duplicate', 'values']",
+            parameter_name="unnamed-parameter",
             type="Parameter definition error",
         ),
         ParameterDefinitionValidationError(
             path=("paths", "/foo", "parameters", "[1]", "items", "items", "enum"),
             reason="The enum values ['there', 'are', 'duplicate', 'duplicate', 'values'] contains duplicate values",
+            parameter_name="unnamed-parameter",
             type="Parameter definition error",
         ),
     }

@@ -3,6 +3,8 @@
 see https://github.com/swagger-api/swagger-editor/tree/master/src/plugins/validate-semantic
 for semantic rules (i.e. beyond teh JSONSchema validation of the swagger)"""
 import json
+import numbers
+import re
 from itertools import groupby
 from pathlib import Path
 from typing import Set, Dict
@@ -70,18 +72,39 @@ def check_security(swagger: Dict):
 
 
 def _check_parameter(param: Dict, path_param):
+    """Check a parameter structure
+
+    For a parameter, the check for consistency are on:
+    - required and default
+    - type/format and default
+    - enum
+    """
     events = set()
 
+    name = param.get("name", "unnamed-parameter")
+    required = param.get("required", False)
     default = param.get("default")
-    type = param.get("type")
+    _type = param.get("type")
+    format = param.get("format")
     enum = param.get("enum")
 
+    # check if required=True and default are both given
+    if required and default is not None:
+        events.add(
+            ParameterDefinitionValidationError(
+                path=path_param,
+                reason=f"The parameter is required yet it has a default value",
+                parameter_name=name,
+            )
+        )
+
     # check if type==array that there is an items
-    if type == "array" and "items" not in param:
+    if _type == "array" and "items" not in param:
         events.add(
             ParameterDefinitionValidationError(
                 path=path_param,
                 reason=f"The parameter is of type 'array' but is missing an 'items' field",
+                parameter_name=name,
             )
         )
 
@@ -92,25 +115,82 @@ def _check_parameter(param: Dict, path_param):
                 ParameterDefinitionValidationError(
                     path=path_param + ("enum",),
                     reason=f"The enum values {enum} contains duplicate values",
+                    parameter_name=name,
                 )
             )
         if default is not None and default not in enum:
             events.add(
                 ParameterDefinitionValidationError(
                     path=path_param + ("default",),
-                    reason=f"The default value '{default}' is not one of the enum values {enum}",
+                    reason=f"The default value {repr(default)} is not one of the enum values {enum}",
+                    parameter_name=name,
                 )
             )
 
-    # check default value in accordance with type
-    if default and type:
-        if type == "string" and not isinstance(default, str):
-            events.add(
-                ParameterDefinitionValidationError(
-                    path=path_param + ("default",),
-                    reason=f"The default value '{default}' has not the expected type '{type}'",
+    # check type/format & default value in accordance with type/format
+    # https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types
+    map_type2subtypes_pythontype = {
+        ("string", None): str,
+        ("string", "byte"): re.compile(
+            r"^(?:[A-Za-z0-9+/\s]{4})*(?:[A-Za-z0-9+/\s]{2}==|[A-Za-z0-9+/\s]{3}=)?$"
+        ),
+        ("string", "binary"): str,
+        ("string", "date"): re.compile(r"^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$"),
+        ("string", "dateTime"): re.compile(
+            r"^([0-9]+)-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])"  # date
+            r"[Tt]"
+            r"([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?"  # time
+            r"(([Zz])|([+|\-]([01][0-9]|2[0-3]):[0-5][0-9]))$"  # offset
+        ),
+        ("string", "password"): str,
+        ("integer", None): numbers.Integral,
+        ("integer", "int32"): numbers.Integral,
+        ("integer", "int64"): numbers.Integral,
+        ("number", None): numbers.Real,
+        ("number", "float"): numbers.Real,
+        ("number", "double"): numbers.Real,
+        ("boolean", None): bool,
+        ("array", None): list,
+    }
+    if default is not None and _type:
+        regexp_or_type = map_type2subtypes_pythontype.get((_type, format))
+        # if no match with both _type, format, check if match only on _type (format being freeform)
+        if not regexp_or_type:
+            regexp_or_type = map_type2subtypes_pythontype.get((_type, None))
+
+        if regexp_or_type:
+            # the type & format matches one of the Swagger Specifications documented type & format combinations
+            # we can check the default format
+
+            # decompose regexp_or_type into type and RE expression
+            if isinstance(regexp_or_type, type):
+                # regexp_or_type is a standard python type
+                re_pattern = None
+                py_type = regexp_or_type
+            else:
+                # regexp_or_type is a regexp expression
+                re_pattern = regexp_or_type
+                py_type = str
+
+            if not isinstance(default, py_type):
+                events.add(
+                    ParameterDefinitionValidationError(
+                        path=path_param + ("default",),
+                        reason=f"The default value {repr(default)} is not of the expected type '{_type}'",
+                        parameter_name=name,
+                    )
                 )
-            )
+
+            # if a regexp matching string is expected
+            if re_pattern is not None:
+                if not (isinstance(default, str) and re_pattern.match(default)):
+                    events.add(
+                        ParameterDefinitionValidationError(
+                            path=path_param + ("default",),
+                            reason=f"The default value '{default}' does not conform to the string format '{format}'",
+                            parameter_name=name,
+                        )
+                    )
 
     return events
 
@@ -216,7 +296,7 @@ def detect_duplicate_operationId(swagger: Dict):
                     DuplicateOperationIdValidationError(
                         path=pth,
                         path_already_used=pth_first,
-                        reason=f"the operationId '{opId}' is already used in an endpoint",
+                        reason=f"the operationId '{opId}' is already used in an endpoint.",
                         operationId=opId,
                     )
                 )

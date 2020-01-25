@@ -158,6 +158,7 @@ class BasePathRewrittenFilterAction(FilterAction):
 class ParameterDefinitionValidationError(ValidationError):
     """An error on a parameter definition"""
 
+    parameter_name: str
     type: str = "Parameter definition error"
 
 
