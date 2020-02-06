@@ -17,6 +17,7 @@ Why does this file exist, and why not put this in __main__?
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import Dict
 from urllib.error import URLError, HTTPError
 from urllib.request import urlopen
@@ -110,6 +111,17 @@ class SwaggerFileURL(FileURL):
         return cls(swagger=swagger, url=file_url.url, content=file_url.content)
 
 
+def validate_output_format(ctx, param, value):
+    ALLOWED_EXTENSIONS = {"json", "yaml", "yml"}
+    extension = Path(value.name).suffix[1:]
+    if extension not in ALLOWED_EXTENSIONS:
+        raise click.BadParameter(
+            f"the extension of the file is '{extension}' while it should be one of {ALLOWED_EXTENSIONS}"
+        )
+    value.extension = extension
+    return value
+
+
 @main.command(name="validate")
 @click.argument("swagger_fileurl", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
@@ -147,7 +159,13 @@ def validate(swagger_fileurl: SwaggerFileURL, verbose):
 
 @main.command(name="prune")
 @click.argument("swagger_fileurl", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
-@click.option("-o", "--output", help="Path to write the pruned swagger", type=click.File("w"))
+@click.option(
+    "-o",
+    "--output",
+    help="Path to write the pruned swagger",
+    type=click.File("w"),
+    callback=validate_output_format,
+)
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
 def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
     """Prune unused global definitions/responses/parameters, unused securityDefinition/scopes and unused tags from the swagger.
@@ -180,7 +198,10 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
             sys.exit(1)
 
     if output:
-        output.write(json.dumps(swagger, indent=2))
+        if output.extension in {"yaml", "yml"}:
+            yaml.dump(swagger, output)
+        elif output.extension in {"json"}:
+            output.write(json.dumps(swagger, indent=2))
 
     if actions:
         # display error messages and exit with code = 1
