@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import yaml
 
 from oasapi.common import commonprefix
+
+
+SWAGGER_SAMPLES_PATH = Path(__file__).parent.parent / "docs" / "samples"
 
 swagger_find_keys = yaml.safe_load(
     """

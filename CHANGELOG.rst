@@ -2,6 +2,10 @@
 Changelog
 =========
 
+(dev)
+
+* support outputting swagger in yaml format
+
 0.1.13 (2020-01-25)
 -------------------
 

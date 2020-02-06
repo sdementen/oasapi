@@ -4,6 +4,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from oasapi.cli import validate, shorten_text, main, prune
+from tests.test_common import SWAGGER_SAMPLES_PATH
 
 
 def test_shorten_text():
@@ -80,7 +81,7 @@ Options:
 
 def test_validate_ok_file():
     runner = CliRunner()
-    swagger_path = Path(__file__).parent.parent / "docs" / "samples" / "swagger_petstore.json"
+    swagger_path = SWAGGER_SAMPLES_PATH / "swagger_petstore.json"
     result = runner.invoke(validate, [str(swagger_path)])
 
     assert result.output == "The swagger is valid.\n"
@@ -141,9 +142,7 @@ def test_validate_nok_stdin_bad_yaml():
 
 def test_validate_nok():
     runner = CliRunner()
-    swagger_path = (
-        Path(__file__).parent.parent / "docs" / "samples" / "swagger_petstore_with_errors.json"
-    )
+    swagger_path = SWAGGER_SAMPLES_PATH / "swagger_petstore_with_errors.json"
     result = runner.invoke(validate, [str(swagger_path)])
 
     assert result.output == (
@@ -184,6 +183,7 @@ def test_prune_ok_stdin():
         info=dict(title="my API", version="v1.0"),
         definitions={"unused": {}},
     )
+
     result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
 
     assert (
@@ -197,9 +197,7 @@ def test_prune_ok_stdin():
 
 def test_prune_nok_swagger_invalid():
     runner = CliRunner()
-    swagger_path = (
-        Path(__file__).parent.parent / "docs" / "samples" / "swagger_petstore_with_errors.json"
-    )
+    swagger_path = SWAGGER_SAMPLES_PATH / "swagger_petstore_with_errors.json"
     result = runner.invoke(prune, [str(swagger_path)])
 
     assert result.output == (
@@ -219,6 +217,29 @@ def test_prune_output_swagger_stdin():
         result = runner.invoke(prune, ["-", "-o", file_output], input=json.dumps(swagger))
         assert list(fld.iterdir()) == [fld / file_output]
         assert (Path(fld) / file_output).read_text() == json.dumps(swagger, indent=2)
+
+    assert result.output == "The swagger had no unused elements.\n"
+    assert result.exit_code == 0
+
+
+def test_prune_output_swagger_yaml_order_kept():
+    runner = CliRunner()
+    swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
+
+    file_output = "output.yaml"
+    with runner.isolated_filesystem() as fld:
+        fld = Path(fld)
+        result = runner.invoke(prune, ["-", "-o", file_output], input=json.dumps(swagger))
+        assert list(fld.iterdir()) == [fld / file_output]
+        assert (
+            (Path(fld) / file_output).read_text()
+            == """swagger: '2.0'
+paths: {}
+info:
+  title: my API
+  version: v1.0
+"""
+        )
 
     assert result.output == "The swagger had no unused elements.\n"
     assert result.exit_code == 0

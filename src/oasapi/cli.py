@@ -111,7 +111,11 @@ class SwaggerFileURL(FileURL):
         return cls(swagger=swagger, url=file_url.url, content=file_url.content)
 
 
-def validate_output_format(ctx, param, value):
+def validate_json_yaml_filename(ctx, param, value):
+    """Validate the name of the file has the proper extension and add the extension to the file object"""
+    if value is None:
+        return value
+
     ALLOWED_EXTENSIONS = {"json", "yaml", "yml"}
     extension = Path(value.name).suffix[1:]
     if extension not in ALLOWED_EXTENSIONS:
@@ -164,7 +168,7 @@ def validate(swagger_fileurl: SwaggerFileURL, verbose):
     "--output",
     help="Path to write the pruned swagger",
     type=click.File("w"),
-    callback=validate_output_format,
+    callback=validate_json_yaml_filename,
 )
 @click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
 def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
@@ -199,7 +203,7 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
 
     if output:
         if output.extension in {"yaml", "yml"}:
-            yaml.dump(swagger, output)
+            yaml.dump(swagger, output, sort_keys=False)
         elif output.extension in {"json"}:
             output.write(json.dumps(swagger, indent=2))
 
