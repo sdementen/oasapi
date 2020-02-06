@@ -27,11 +27,12 @@ import yaml
 from attr import dataclass
 
 import oasapi
+from oasapi.filter import FilterCondition
 from oasapi.timer import Timer
 
 
 def shorten_text(txt, before, after, placeholder="..."):
-    """Shorthen a text to max before+len(placeholder)+after chars.
+    """Shorten a text to max before+len(placeholder)+after chars.
 
     The new text will keep the before first characters and after last characters
     """
@@ -116,8 +117,14 @@ def validate_json_yaml_filename(ctx, param, value):
     if value is None:
         return value
 
-    ALLOWED_EXTENSIONS = {"json", "yaml", "yml"}
+    if not hasattr(value, "name") or value.name == "<stdout>":
+        # stdin/stdout case
+        value.extension = "yaml"
+        return value
+
+    ALLOWED_EXTENSIONS = ["json", "yaml", "yml"]
     extension = Path(value.name).suffix[1:]
+
     if extension not in ALLOWED_EXTENSIONS:
         raise click.BadParameter(
             f"the extension of the file is '{extension}' while it should be one of {ALLOWED_EXTENSIONS}"
@@ -219,3 +226,78 @@ def prune(swagger_fileurl: SwaggerFileURL, output, verbose):
     else:
         # informs everything OK
         click.secho("The swagger had no unused elements.", fg="green", err=True)
+
+
+@main.command(name="filter")
+@click.argument("swagger_fileurl", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
+@click.option("-t", "--tag", help="A tag to keep", multiple=True)
+@click.option("-p", "--path", help="A path to keep", multiple=True)
+@click.option("-s", "--security_scope", help="A security_scope to keep", multiple=True)
+@click.option(
+    "-o",
+    "--output",
+    help="Path to write the filtered swagger",
+    type=click.File("w"),
+    callback=validate_json_yaml_filename,
+)
+@click.option("-v", "--verbose", count=True, help="Make the operation more talkative")
+def filter(swagger_fileurl: SwaggerFileURL, output, verbose, tag, path, security_scope):
+    """Filter the operations based on tags, operation path or security scopes
+
+    SWAGGER is the path to the swagger file, in json or yaml format.
+    It can be a file path, an URL or a dash (-) for the stdin
+
+    """
+    if verbose > 0:
+        logging.basicConfig(level=logging.DEBUG)
+
+    swagger = swagger_fileurl.swagger
+
+    with Timer("swagger filtering"):
+        try:
+            swagger, actions = oasapi.filter(
+                swagger,
+                mode="keep_only",
+                conditions=[
+                    FilterCondition(
+                        tags=tag or None,
+                        operations=path or None,
+                        security_scopes=security_scope or None,
+                    )
+                ],
+            )
+        except Exception as e:
+            # something wrong happened, check if due to invalid swagger
+            if oasapi.validate(swagger):
+                click.secho(
+                    f"The swagger could not been filtered as it is invalid. Please ensure the swagger is valid before pruning it.",
+                    fg="red",
+                    err=True,
+                )
+            else:  # pragma: no cover
+                # should not happen
+                click.secho(
+                    f"The swagger could not been filtered due to an unhandled exception ({e}). Please fill an issue.",
+                    fg="red",
+                    err=True,
+                )
+            sys.exit(1)
+
+    if output:
+        if output.extension in {"yaml", "yml"}:
+            yaml.dump(swagger, output, sort_keys=False)
+        elif output.extension in {"json"}:
+            output.write(json.dumps(swagger, indent=2))
+
+    if actions:
+        # display error messages and exit with code = 1
+        click.secho(f"The swagger has been pruned of {len(actions)} elements:", fg="red", err=True)
+        for action in sorted(actions, key=lambda error: str(error)):
+            click.secho(
+                f"- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",
+                fg="red",
+                err=True,
+            )
+    else:
+        # informs everything OK
+        click.secho("The swagger has been filtered.", fg="green", err=True)

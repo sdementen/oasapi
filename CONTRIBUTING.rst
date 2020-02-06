@@ -88,7 +88,6 @@ To install a minimal virtual environment with tox (see https://docs.python.org/3
     ' activate your .env virtualenv
     python -m pip install -r requirements-dev.txt
 
-
 To install the git pre-commit scripts::
 
     pre-commit install
@@ -110,8 +109,6 @@ To recreate the tox environments (e.g. if you add a dependency in the setup.py):
     tox --recreate
     tox --recreate -e py36              '(only the py36 environment)
 
-
-
 To run a subset of tests::
 
     tox -e envname -- pytest -k test_myfeature
@@ -119,7 +116,6 @@ To run a subset of tests::
 To run all the test environments in *parallel* (you need to ``pip install detox``)::
 
     detox
-
 
 Tips with PyCharm
 -----------------

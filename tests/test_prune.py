@@ -7,12 +7,14 @@ from oasapi.events import (
     OAuth2ScopeNotUsedFilterAction,
     SecurityDefinitionNotUsedFilterAction,
     TagNotUsedFilterAction,
+    PathsEmptyFilterError,
 )
 from oasapi.prune import (
     prune_unused_global_items,
     prune_unused_security_definitions,
     prune_unused_tags,
     prune,
+    prune_unused_paths,
 )
 
 
@@ -72,6 +74,42 @@ def test_prune_unused_references():
             "some-other-response": {"$ref": "#/responses/some-another-response"},
             "some-response": {"$ref": "#/responses/some-other-response"},
         },
+        "swagger": "2.0",
+    }
+
+
+def test_prune_unused_paths():
+    swagger_str = """
+    swagger: '2.0'
+    info:
+      version: v1.0
+      title: my api
+    paths:
+      /foo: {}
+      /baz:
+        parameters: {}
+      /biz:
+        get: {}
+        """
+    swagger = yaml.safe_load(swagger_str)
+
+    swagger, actions = prune_unused_paths(swagger)
+
+    assert actions == [
+        PathsEmptyFilterError(
+            path=("paths", "/foo"),
+            reason="path '/foo' has no operations defined",
+            type="Path is empty",
+        ),
+        PathsEmptyFilterError(
+            path=("paths", "/baz"),
+            reason="path '/baz' has no operations defined",
+            type="Path is empty",
+        ),
+    ]
+    assert swagger == {
+        "info": {"title": "my api", "version": "v1.0"},
+        "paths": {"/biz": {"get": {}}},
         "swagger": "2.0",
     }
 

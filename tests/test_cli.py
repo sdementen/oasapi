@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
-from oasapi.cli import validate, shorten_text, main, prune
-from tests.test_common import SWAGGER_SAMPLES_PATH
+from oasapi.cli import shorten_text, main, validate, prune, filter
+from test_common import SWAGGER_SAMPLES_PATH
 
 
 def test_shorten_text():
@@ -28,6 +29,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  filter    Filter the operations based on tags, operation path or security...
   prune     Prune unused global definitions/responses/parameters, unused...
   validate  Validate the SWAGGER file.
 """
@@ -59,7 +61,7 @@ Options:
 def test_prune_help():
     runner = CliRunner()
     result = runner.invoke(prune, ["--help"])
-    print(result.output)
+
     assert (
         result.output
         == """Usage: prune [OPTIONS] SWAGGER
@@ -166,16 +168,18 @@ def test_validate_nofile():
     assert result.exit_code == 2
 
 
-def test_prune_no_pruning_stdin():
+@pytest.mark.parametrize("verbose", [True, False])
+def test_prune_no_pruning_stdin(verbose):
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
-    result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
+    result = runner.invoke(prune, ["-"] + (["-v"] if verbose else []), input=json.dumps(swagger))
 
     assert result.output == "The swagger had no unused elements.\n"
     assert result.exit_code == 0
 
 
-def test_prune_ok_stdin():
+@pytest.mark.parametrize("verbose", [True, False])
+def test_prune_ok_stdin(verbose):
     runner = CliRunner()
     swagger = dict(
         swagger="2.0",
@@ -184,7 +188,7 @@ def test_prune_ok_stdin():
         definitions={"unused": {}},
     )
 
-    result = runner.invoke(prune, ["-", "-v"], input=json.dumps(swagger))
+    result = runner.invoke(prune, ["-"] + (["-v"] if verbose else []), input=json.dumps(swagger))
 
     assert (
         result.output
@@ -242,4 +246,69 @@ info:
         )
 
     assert result.output == "The swagger had no unused elements.\n"
+    assert result.exit_code == 0
+
+
+def test_prune_output_bad_file_extension():
+    runner = CliRunner()
+    swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
+
+    file_output = "output.nonsense"
+    with runner.isolated_filesystem() as fld:
+        fld = Path(fld)
+        result = runner.invoke(prune, ["-", "-o", file_output], input=json.dumps(swagger))
+
+    print(result.output)
+    print("xxx")
+    print(result.output)
+
+    assert (
+        result.output
+        == """Usage: prune [OPTIONS] SWAGGER
+
+Error: Invalid value for "-o" / "--output": the extension of the file is 'nonsense' while it should be one of ['json', 'yaml', 'yml']
+"""
+    )
+    assert result.exit_code == 2
+
+
+@pytest.mark.parametrize("verbose", [True, False])
+def test_filter_ok_file(verbose):
+    runner = CliRunner()
+    swagger_path = SWAGGER_SAMPLES_PATH / "swagger_petstore.json"
+    result = runner.invoke(filter, [str(swagger_path), "-o", "-"] + (["-v"] if verbose else []))
+
+    assert result.exit_code == 0
+
+
+def test_filter_ok_file_empty():
+    runner = CliRunner()
+    swagger = dict(
+        swagger="2.0",
+        info=dict(title="my API", version="v1.0"),
+        paths={"/foo": dict(get=dict(tags=["mytag", "othertag"]))},
+    )
+
+    file_output = "output.yaml"
+    with runner.isolated_filesystem() as fld:
+        fld = Path(fld)
+        result = runner.invoke(
+            filter, ["-", "-o", file_output, "-t", "mytag"], input=json.dumps(swagger)
+        )
+        assert list(fld.iterdir()) == [fld / file_output]
+        assert (
+            (Path(fld) / file_output).read_text()
+            == """swagger: '2.0'
+info:
+  title: my API
+  version: v1.0
+paths:
+  /foo:
+    get:
+      tags:
+      - mytag
+"""
+        )
+
+    assert result.output == "The swagger has been filtered.\n"
     assert result.exit_code == 0

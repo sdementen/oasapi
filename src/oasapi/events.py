@@ -79,7 +79,7 @@ class ReferenceNotFoundFilterError(FilterError):
 
 @dataclass(frozen=True)
 class PathsEmptyFilterError(FilterError):
-    type: str = "Paths are empty"
+    type: str = "Path is empty"
 
 
 @dataclass(frozen=True)

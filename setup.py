@@ -68,7 +68,7 @@ setup(
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     python_requires=">=3.6.*",
-    install_requires=["click", "jsonschema", "pyyaml", "jsonpath-ng"],
+    install_requires=["click", "jsonschema", "pyyaml", "jsonpath-ng", "deepmerge"],
     extras_require={
         # eg:
         #   'rst': ['docutils>=0.11'],
