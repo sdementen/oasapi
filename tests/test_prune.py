@@ -14,7 +14,7 @@ from oasapi.prune import (
     prune_unused_security_definitions,
     prune_unused_tags,
     prune,
-    prune_unused_paths,
+    prune_empty_paths,
 )
 
 
@@ -93,7 +93,7 @@ def test_prune_unused_paths():
         """
     swagger = yaml.safe_load(swagger_str)
 
-    swagger, actions = prune_unused_paths(swagger)
+    swagger, actions = prune_empty_paths(swagger)
 
     assert actions == [
         PathsEmptyFilterError(
@@ -318,6 +318,27 @@ definitions:
     swagger_pruned, actions = prune(swagger)
 
     assert swagger != swagger_pruned
+    assert swagger_pruned == {
+        "info": {"title": "my api", "version": "v1.0"},
+        "paths": {
+            "/foo": {
+                "get": {
+                    "responses": {200: {"description": "OK"}},
+                    "security": [{"two": []}],
+                    "tags": ["one", "two", "three"],
+                }
+            }
+        },
+        "securityDefinitions": {
+            "two": {
+                "authorizationUrl": "http://foo.com",
+                "flow": "implicit",
+                "scopes": {},
+                "type": "oauth2",
+            }
+        },
+        "swagger": "2.0",
+    }
     assert actions == [
         TagNotUsedFilterAction(
             path=("tags", "[0]"),

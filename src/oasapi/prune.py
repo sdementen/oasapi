@@ -26,7 +26,7 @@ from oasapi.events import (
 
 def prune_unused_global_items(swagger):
     """Prune the swagger (in place) of its unused global items
-    in the definitions, responses and paremeters global sections"""
+    in the definitions, responses and parameters global sections"""
 
     def decompose_reference(references):
         return set(
@@ -60,6 +60,11 @@ def prune_unused_global_items(swagger):
             actions.append(
                 ReferenceNotUsedFilterAction(path=(rt, obj), reason="reference not used")
             )
+
+    # remove sections that are left empty
+    for section in REFERENCE_SECTIONS:
+        if section in swagger and not swagger[section]:
+            del swagger[section]
 
     return swagger, actions
 
@@ -98,6 +103,10 @@ def prune_unused_security_definitions(swagger):
                         )
                     )
 
+    # remove securityDefinitions if empty
+    if not swagger["securityDefinitions"]:
+        del swagger["securityDefinitions"]
+
     return swagger, actions
 
 
@@ -123,11 +132,15 @@ def prune_unused_tags(swagger):
 
     swagger["tags"] = [tag for tag in swagger["tags"] if tag["name"] in tags_used]
 
+    # remove tags if empty
+    if not swagger["tags"]:
+        del swagger["tags"]
+
     return swagger, actions
 
 
-def prune_unused_paths(swagger):
-    """Prune the swagger (in place) of its unused paths (ie paths with no verb)"""
+def prune_empty_paths(swagger):
+    """Prune the swagger (in place) of its empty paths (ie paths with no verb)"""
 
     # list all operations (paths without any operation are not included
     actions = []
@@ -154,6 +167,7 @@ def prune(swagger: Dict) -> Tuple[Dict, List[FilterAction]]:
     - unused global definitions/responses/parameters
     - unused securityDefinition/scopes
     - unused tags
+    - empty paths (i.e. endpoints with no verbs)
 
 
     :param swagger: the swagger spec
@@ -165,7 +179,7 @@ def prune(swagger: Dict) -> Tuple[Dict, List[FilterAction]]:
             *[
                 prune_operation(swagger)[1]
                 for prune_operation in [
-                    prune_unused_paths,
+                    prune_empty_paths,
                     prune_unused_tags,
                     prune_unused_global_items,
                     prune_unused_security_definitions,

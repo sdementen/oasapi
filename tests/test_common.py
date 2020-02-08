@@ -1,9 +1,12 @@
+import logging
+import time
 from pathlib import Path
 
+import pytest
 import yaml
 
 from oasapi.common import commonprefix
-
+from oasapi.timer import Timer
 
 SWAGGER_SAMPLES_PATH = Path(__file__).parent.parent / "docs" / "samples"
 
@@ -153,3 +156,29 @@ paths:
 
     result = commonprefix(swagger["paths"].keys())
     assert result == "/v1/path/path3"
+
+
+@pytest.mark.parametrize(
+    "name,level,log_message",
+    [
+        ("my block", logging.INFO, "INFO     oasapi.timer.timer:timer.py:19 'my block' ran in"),
+        (
+            None,
+            logging.INFO,
+            "INFO     oasapi.timer.timer:timer.py:19 '<anonymous code block>' ran in",
+        ),
+        (
+            None,
+            logging.DEBUG,
+            "INFO     oasapi.timer.timer:timer.py:19 '<anonymous code block>' ran in",
+        ),
+        (None, logging.ERROR, ""),
+    ],
+)
+def test_time(name, level, log_message, caplog):
+    caplog.set_level(level=level)
+    with Timer(name=name) as t:
+        time.sleep(1)
+    # assert time interval is close to 1
+    assert abs(t.interval - 1) <= 0.01
+    assert log_message in caplog.text

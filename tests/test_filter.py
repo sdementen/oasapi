@@ -19,7 +19,8 @@ paths:
         sec2: [write]
     post:
       tags: [tag1]
-      security: []
+      security:
+      - sec1: [read, write, admin]
     patch:
       tags: [tag2]
       security:
@@ -28,12 +29,13 @@ paths:
     get:
       tags: [tag3]
       security:
-      - sec1: [read]
+      - sec1: [read, write]
         sec2: [read]
     post:
       tags: [tag1, tag2]
     patch:
       tags: [tag2, tag3]
+    put: {}
 security:
 - sec1: [read]
 - sec2: [write]
@@ -57,6 +59,20 @@ def test_resolve_security(swagger):
     # check security has changed on the /no-security.get operation but no on the other
     assert swagger["paths"]["/no-security"]["get"]["security"] == swagger["security"]
     assert swagger["paths"]["/foo/baz"]["get"]["security"] == before
+
+
+def test_resolve_security_no_global_security(swagger):
+    # add an endpoint without security
+    del swagger["security"]
+
+    # remember security of endpoint /foo/baz.get
+    before = copy.deepcopy(swagger)
+
+    # resolve security
+    resolve_security(swagger)
+
+    # check security has changed on the /no-security.get operation but no on the other
+    assert swagger == before
 
 
 def test_generate_filter_conditions_simple():
@@ -107,14 +123,39 @@ def test_generate_filter_conditions_operation():
 
 
 def test_generate_filter_conditions_security():
-    filter = generate_filter_conditions([FilterCondition(security_scopes=["sec1"])])
+    filter = generate_filter_conditions([FilterCondition(security_scopes=["scope1"])])
     assert not filter((), {})
-    assert not filter((), dict(tags=["tag2"]))
-    assert not filter((), dict(security=[{"oauth": ["tag1"]}]))
+    assert not filter((), dict(security=[{"oauth": ["scope2"]}]))
+    assert not filter((), dict(security=[{"oauth": ["scope1", "scope2"]}]))
+    assert not filter((), dict(security=[{"oauth": ["scope1"], "reauth": ["scope2"]}]))
 
-    assert filter((), dict(security=[{"oauth": ["sec1"]}])) == {"security": [{"oauth": ["sec1"]}]}
-    assert filter((), dict(security=[{"oauth": ["sec1", "sec2"]}])) == {
-        "security": [{"oauth": ["sec1"]}]
+    # operation is not secured (=open) so not filtered
+    assert filter((), dict(tags=["tag2"]))
+
+    assert filter((), dict(security=[{"oauth": ["scope1"]}])) == {
+        "security": [{"oauth": ["scope1"]}]
+    }
+
+
+def test_generate_filter_conditions_security_multi_scopes():
+    filter = generate_filter_conditions([FilterCondition(security_scopes=["scope1", "scope3"])])
+
+    assert not filter((), {})
+    assert not filter((), dict(security=[{"oauth": ["scope2"]}]))
+    assert not filter((), dict(security=[{"oauth": ["scope1", "scope2"]}]))
+    assert not filter((), dict(security=[{"oauth": ["scope1"], "reauth": ["scope2"]}]))
+
+    # operation is not secured (=open) so not filtered
+    assert filter((), dict(tags=["tag2"]))
+
+    assert filter((), dict(security=[{"oauth": ["scope1"]}])) == {
+        "security": [{"oauth": ["scope1"]}]
+    }
+    assert filter((), dict(security=[{"oauth": ["scope1", "scope3"]}])) == {
+        "security": [{"oauth": ["scope1", "scope3"]}]
+    }
+    assert filter((), dict(security=[{"oauth": ["scope1"], "reauth": ["scope3"]}])) == {
+        "security": [{"oauth": ["scope1"], "reauth": ["scope3"]}]
     }
 
 
@@ -130,7 +171,7 @@ conditions = [
                         "tags": ["tag2", "tag1"],
                     },
                     "patch": {"security": [{"sec2": ["write"]}], "tags": ["tag2"]},
-                    "post": {"security": [], "tags": ["tag1"]},
+                    "post": {"security": [{"sec1": ["read", "write", "admin"]}], "tags": ["tag1"]},
                 },
                 "/foo/baz": {"patch": {"tags": ["tag2"]}, "post": {"tags": ["tag2", "tag1"]}},
             },
@@ -154,14 +195,15 @@ conditions = [
         },
     ),
     (
-        [FilterCondition(tags=["tag2"], security_scopes=["read"])],
+        [FilterCondition(security_scopes=["read"])],
         {
             "info": {"title": "my api", "version": "v1.0"},
             "paths": {
-                "/foo": {"get": {"security": [{"sec1": ["read"]}], "tags": ["tag2"]}},
+                "/foo": {},
                 "/foo/baz": {
-                    "patch": {"security": [{"sec1": ["read"]}], "tags": ["tag2"]},
-                    "post": {"security": [{"sec1": ["read"]}], "tags": ["tag2"]},
+                    "patch": {"security": [{"sec1": ["read"]}], "tags": ["tag2", "tag3"]},
+                    "post": {"security": [{"sec1": ["read"]}], "tags": ["tag1", "tag2"]},
+                    "put": {"security": [{"sec1": ["read"]}]},
                 },
             },
             "security": [{"sec1": ["read"]}],
@@ -169,30 +211,70 @@ conditions = [
         },
     ),
     (
-        [FilterCondition(security_scopes=["write"]), FilterCondition(security_scopes=["read"])],
+        [FilterCondition(security_scopes=["write", "read"])],
         {
             "info": {"title": "my api", "version": "v1.0"},
             "paths": {
                 "/foo": {
                     "get": {
-                        "security": [{"sec2": ["write"]}, {"sec1": ["read"]}],
+                        "security": [{"sec1": ["read"], "sec2": ["write"]}],
                         "tags": ["tag1", "tag2", "tag3"],
                     },
                     "patch": {"security": [{"sec2": ["write"]}], "tags": ["tag2"]},
                 },
                 "/foo/baz": {
-                    "get": {"security": [{"sec1": ["read"], "sec2": ["read"]}], "tags": ["tag3"]},
+                    "get": {
+                        "security": [{"sec1": ["read", "write"], "sec2": ["read"]}],
+                        "tags": ["tag3"],
+                    },
                     "patch": {
-                        "security": [{"sec2": ["write"]}, {"sec1": ["read"]}],
+                        "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
                         "tags": ["tag2", "tag3"],
                     },
                     "post": {
-                        "security": [{"sec2": ["write"]}, {"sec1": ["read"]}],
+                        "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
                         "tags": ["tag1", "tag2"],
                     },
+                    "put": {"security": [{"sec1": ["read"]}, {"sec2": ["write"]}]},
                 },
             },
-            "security": [{"sec2": ["write"]}, {"sec1": ["read"]}],
+            "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
+            "swagger": "2.0",
+        },
+    ),
+    (
+        [],
+        {
+            "info": {"title": "my api", "version": "v1.0"},
+            "paths": {"/foo": {}, "/foo/baz": {}},
+            "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
+            "swagger": "2.0",
+        },
+    ),
+    (
+        None,
+        {
+            "info": {"title": "my api", "version": "v1.0"},
+            "paths": {
+                "/foo": {
+                    "get": {
+                        "security": [{"sec1": ["read"], "sec2": ["write"]}],
+                        "tags": ["tag1", "tag2", "tag3"],
+                    },
+                    "patch": {"security": [{"sec2": ["write"]}], "tags": ["tag2"]},
+                    "post": {"security": [{"sec1": ["read", "write", "admin"]}], "tags": ["tag1"]},
+                },
+                "/foo/baz": {
+                    "get": {
+                        "security": [{"sec1": ["read", "write"], "sec2": ["read"]}],
+                        "tags": ["tag3"],
+                    },
+                    "patch": {"tags": ["tag2", "tag3"]},
+                    "post": {"tags": ["tag1", "tag2"]},
+                    "put": {},
+                },
+            },
+            "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
             "swagger": "2.0",
         },
     ),
@@ -209,9 +291,10 @@ def test_filtering_conditions(swagger, conditions, expected):
     assert actions == []
 
 
-@pytest.mark.parametrize("global_security", [True, False])
-def test_filtering_conditions_no_global_security(swagger, global_security):
-    if not global_security:
+@pytest.mark.parametrize("remove_global_security", [True, False])
+def test_filtering_conditions_no_global_security(swagger, remove_global_security):
+    # with no global security, some endpoints are open and should not be filtered
+    if remove_global_security:
         del swagger["security"]
 
     swagger_filtered, actions = filter(
@@ -220,11 +303,34 @@ def test_filtering_conditions_no_global_security(swagger, global_security):
         conditions=[FilterCondition(security_scopes=["inexisting-scope"])],
     )
 
-    assert swagger_filtered == {
-        "info": {"title": "my api", "version": "v1.0"},
-        "paths": {"/foo": {}, "/foo/baz": {}},
-        "swagger": "2.0",
-    }
+    assert swagger_filtered == (
+        {
+            "info": {"title": "my api", "version": "v1.0"},
+            "paths": {
+                "/foo": {},
+                "/foo/baz": {
+                    "patch": {"tags": ["tag2", "tag3"]},
+                    "post": {"tags": ["tag1", "tag2"]},
+                    "put": {},
+                },
+            },
+            "swagger": "2.0",
+        }
+        if remove_global_security
+        else {
+            "info": {"title": "my api", "version": "v1.0"},
+            "paths": {"/foo": {}, "/foo/baz": {}},
+            "swagger": "2.0",
+        }
+    )
 
     # no error in this basic test
     assert actions == []
+
+
+def test_filtering_mode():
+    # does not fail
+    filter({"paths": {}}, mode="keep_only", conditions=[])
+
+    with pytest.raises(NotImplementedError, match="The mode 'remove' is not yet implemented."):
+        filter({"paths": {}}, mode="remove", conditions=[])

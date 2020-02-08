@@ -7,7 +7,7 @@ import numbers
 import re
 from itertools import groupby
 from pathlib import Path
-from typing import Set, Dict
+from typing import Set, Dict, Tuple, List
 
 from jsonschema import Draft4Validator
 
@@ -314,7 +314,7 @@ def check_schema(swagger: Dict) -> Set[ValidationError]:
     }
 
 
-def validate(swagger: Dict) -> Set[ValidationError]:
+def validate(swagger: Dict) -> Tuple[Dict, List[ValidationError]]:
     """
     Validate a swagger specification.
 
@@ -338,4 +338,4 @@ def validate(swagger: Dict) -> Set[ValidationError]:
         | detect_duplicate_operationId(swagger)
     )
 
-    return errors
+    return swagger, errors

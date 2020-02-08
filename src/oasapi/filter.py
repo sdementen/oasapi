@@ -1,7 +1,7 @@
 import copy
 import re
 from functools import reduce
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Set
 
 import deepmerge
 from attr import dataclass
@@ -12,33 +12,43 @@ from oasapi.events import FilterAction
 
 @dataclass
 class FilterCondition:
-    tags: List[str] = None
+    tags: Set[str] = None
     operations: List[str] = None
-    security_scopes: List[str] = None
+    security_scopes: Set[str] = None
 
     _operations_re = None
 
-    def __attrs_post_init__(self):
-        # def __post_init__(self): # for dataclasses
+    def __attrs_post_init__(self):  # def __post_init__(self): # for dataclasses
+
+        # convert tags/security_scopes attributes to sets
+        if self.tags:
+            self.tags = set(self.tags)
+        if self.security_scopes:
+            self.security_scopes = set(self.security_scopes)
+
+        # do not convert operations to set to keep order of filtering
         if self.operations:
             # store compiled version of regex expressions
-            self._operations_re = [re.compile(op, re.IGNORECASE) for op in self.operations]
+            self._operations_re = [
+                re.compile(op.rstrip("$") + "$", re.IGNORECASE) for op in self.operations
+            ]
 
 
 def filter(
-    swagger: Dict, mode="keep_only", conditions=List[FilterCondition]
+    swagger: Dict, mode="keep_only", conditions: List[FilterCondition] = None
 ) -> Tuple[Dict, List[FilterAction]]:
     """
     Filter endpoints of a swagger specification.
 
     The endpoints can be filtered according to two modes:
     - keep_only: it will keep only the operations matching any of the conditions
-    - remove: it will remove only the operations matching any of the conditions
+    - remove: it will remove only the operations matching any of the conditions (TO BE IMPLEMENTED)
 
     The conditions parameter is a list of FilterCondition objects containing each:
-    - tags: the operation is kept/removed only if it has at least one tag in the tags
-    - operations: the operation is kept/removed only if its VERB + PATH matches at least one operation in the operations
-    - security_scopes: the operation is kept/removed only if it is protected by at least one security with a scope in the security_scopes
+    - tags: the operation is kept only if it has at least one tag in the tags
+    - operations: the operation is kept only if its VERB + PATH matches at least one operation in the operations
+    - security_scopes: the operation is kept only if it requires no security or if some of its security items only requires
+      the scopes in the security_scopes
     Any of these fields can be None to avoid matching on the field criteria.
 
     :param mode:
@@ -46,33 +56,39 @@ def filter(
     :param swagger: the swagger spec
     :return: filtered swagger, a set of actions
     """
+    if mode != "keep_only":
+        raise NotImplementedError(f"The mode '{mode}' is not yet implemented.")
+
+    if conditions is None:
+        return swagger, []
+
     swagger = copy.deepcopy(swagger)
 
-    filter = generate_filter_conditions(conditions, merge_matches=True)
+    global_security = swagger.get("security")
+    filter = generate_filter_conditions(
+        conditions, merge_matches=True, global_security=global_security
+    )
 
-    # resolve security to have each operation have the proper security
-    # after having already filtered/matched the security against the conditions
-    # todo: resulting swagger has global security spread over all paths due to resolving
-    #       it should be cleaned afterwards to keep the original approach...
-    #       Maybe add this to the "prune" operation (factorize security) ?
-    if "security" in swagger and filter.on_security_scopes_useful:
+    # if global security defined, filter it also
+    if global_security is not None and filter.on_security_scopes_useful:
         match = filter((), swagger, on_tags=False, on_operations=False)
         if match:
             swagger = match
         else:
+            # TODO: as the global security does not match with the conditions
+            #       we could already remove from the paths all operations with no
+            #       security defined (optimization trick)
             del swagger["security"]
 
-        resolve_security(swagger)
-
     # get operations to keep
-    operations_to_remove = {
+    operations_to_keep = {
         path: filter(path, operation)
         for key, operation, path in get_elements(swagger, JSPATH_OPERATIONS)
     }
     # update the paths
     paths = swagger["paths"]
-    for (_, path, verb), new_value in operations_to_remove.items():
-        if new_value:
+    for (_, path, verb), new_value in operations_to_keep.items():
+        if new_value is not False:
             paths[path][verb] = new_value
         else:
             del paths[path][verb]
@@ -104,7 +120,9 @@ m = deepmerge.Merger(
 )
 
 
-def generate_filter_conditions(conditions: List[FilterCondition], merge_matches=False):
+def generate_filter_conditions(
+    conditions: List[FilterCondition], merge_matches=False, global_security=None
+):
     """Return a function:
      - taking an operation (as a dict) as well as three flags:
         - on_tags (default = True)
@@ -133,6 +151,7 @@ def generate_filter_conditions(conditions: List[FilterCondition], merge_matches=
       - flag_matches=True,  the resulting operation will have ["tag1","tag2"] (as both conditions matches,
         each returning its operation transformed, i.e. ["tag1"] for the first and ["tag2"] for the second,
         and the results are merged in a single operation, giving ["tag1","tag2"]
+        :param global_security:
 
     """
 
@@ -171,32 +190,33 @@ def generate_filter_conditions(conditions: List[FilterCondition], merge_matches=
 
             # check security_scopes
             if on_security_scopes and condition.security_scopes is not None:
-                # ensure the operation has at least one of the condition security scopes and filter on it
-                original_security = operation.get("security")
-                if original_security is None:
-                    # the operation has not security_scopes while the condition requires security_scopes
-                    return False
-                # keep only securities that contains sec_def with at least one scope in the security_scopes
-                filtered_security = [
-                    {
-                        sec_def: [scope for scope in scopes if scope in condition.security_scopes]
-                        for sec_def, scopes in security.items()
-                    }
-                    for security in original_security
-                ]
-                # remove sec_def with no scopes
-                filtered_security = [
-                    {sec_def: scopes for sec_def, scopes in security.items() if scopes}
-                    for security in filtered_security
-                ]
-                # remove empty security
-                filtered_security = [security for security in filtered_security if security]
-                if not filtered_security:
-                    # no security_scopes matches with the conditions
-                    return False
+                # ensure the operation requires only the condition security scopes (or is open) and filter on it
+                original_security = operation.get("security", global_security)
 
-                # adapt the operation to only have the filtered security_scopes
-                operation["security"] = filtered_security
+                if original_security is not None:
+                    # the endpoint is secured
+                    # keep only securities with all scopes for each sec_def in the security_scopes
+                    filtered_security = [
+                        security
+                        for security in original_security
+                        if all(
+                            condition.security_scopes.issuperset(scopes)
+                            for sec_def, scopes in security.items()
+                        )
+                    ]
+                    # for each filtered security, ensure # remove sec_def with no scopes
+                    # filtered_security = [
+                    #     {sec_def: scopes for sec_def, scopes in security.items() if scopes}
+                    #     for security in filtered_security
+                    # ]
+                    # remove empty security
+                    filtered_security = [security for security in filtered_security if security]
+                    if not filtered_security:
+                        # no security_scopes matches with the conditions
+                        return False
+
+                    # adapt the operation to only have the filtered security_scopes
+                    operation["security"] = filtered_security
 
             # default True
             return operation

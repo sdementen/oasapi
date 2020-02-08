@@ -4,7 +4,10 @@ Changelog
 
 (dev)
 
+* add filtering of swagger
 * support outputting swagger in yaml format
+* support silencing the CLI
+* [dev] refactor CLI
 
 0.1.13 (2020-01-25)
 -------------------

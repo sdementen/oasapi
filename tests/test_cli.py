@@ -3,9 +3,10 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
-from oasapi.cli import shorten_text, main, validate, prune, filter
 from test_common import SWAGGER_SAMPLES_PATH
+
+from oasapi.cli import main, validate, prune, filter
+from oasapi.cli.common import shorten_text
 
 
 def test_shorten_text():
@@ -15,13 +16,10 @@ def test_shorten_text():
     assert shorten_text("this is a long string", before=10, after=10) == "this is a long string"
 
 
-def test_main():
-    runner = CliRunner()
-    result = runner.invoke(main)
-
-    assert (
-        result.output
-        == """Usage: main [OPTIONS] COMMAND [ARGS]...
+command_help_messages = [
+    (
+        main,
+        """Usage: main [OPTIONS] COMMAND [ARGS]...
 
   These are common operations offered by the oasapi library
 
@@ -29,76 +27,98 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  filter    Filter the operations based on tags, operation path or security...
-  prune     Prune unused global definitions/responses/parameters, unused...
-  validate  Validate the SWAGGER file.
-"""
-    )
-    assert result.exit_code == 0
+  filter    Filter the SWAGGER operations based on tags, operation path or...
+  prune     Prune from the SWAGGER unused global...
+  validate  Validate the SWAGGER according to the specs.
+""",
+    ),
+    (
+        validate,
+        """Usage: validate [OPTIONS] SWAGGER
 
-
-def test_validate_help():
-    runner = CliRunner()
-    result = runner.invoke(validate, ["--help"])
-
-    assert (
-        result.output
-        == """Usage: validate [OPTIONS] SWAGGER
-
-  Validate the SWAGGER file.
+  Validate the SWAGGER according to the specs.
 
   SWAGGER is the path to the swagger file, in json or yaml format. It can be a
   file path, an URL or a dash (-) for the stdin
 
 Options:
-  -v, --verbose  Make the operation more talkative
-  --help         Show this message and exit.
-"""
-    )
-    assert result.exit_code == 0
-
-
-def test_prune_help():
-    runner = CliRunner()
-    result = runner.invoke(prune, ["--help"])
-
-    assert (
-        result.output
-        == """Usage: prune [OPTIONS] SWAGGER
-
-  Prune unused global definitions/responses/parameters, unused
-  securityDefinition/scopes and unused tags from the swagger.
-
-  SWAGGER is the path to the swagger file, in json or yaml format. It can be a
-  file path, an URL or a dash (-) for the stdin
-
-Options:
-  -o, --output FILENAME  Path to write the pruned swagger
   -v, --verbose          Make the operation more talkative
+  -s, --silent           Do not print the oasapi messages to stderr
+  -o, --output FILENAME  Path to write the resulting swagger
   --help                 Show this message and exit.
-"""
-    )
-    assert result.exit_code == 0
+""",
+    ),
+    (
+        prune,
+        """Usage: prune [OPTIONS] SWAGGER
+
+  Prune from the SWAGGER unused global definitions/responses/parameters,
+  unused securityDefinition/scopes, unused tags and unused paths.
+
+  SWAGGER is the path to the swagger file, in json or yaml format. It can be a
+  file path, an URL or a dash (-) for the stdin
+
+Options:
+  -v, --verbose          Make the operation more talkative
+  -s, --silent           Do not print the oasapi messages to stderr
+  -o, --output FILENAME  Path to write the resulting swagger
+  --help                 Show this message and exit.
+""",
+    ),
+    (
+        filter,
+        """Usage: filter [OPTIONS] SWAGGER
+
+  Filter the SWAGGER operations based on tags, operation path or security
+  scopes.
+
+  SWAGGER is the path to the swagger file, in json or yaml format. It can be a
+  file path, an URL or a dash (-) for the stdin
+
+Options:
+  -v, --verbose               Make the operation more talkative
+  -s, --silent                Do not print the oasapi messages to stderr
+  -o, --output FILENAME       Path to write the resulting swagger
+  -t, --tag TEXT              A tag to keep
+  -p, --path TEXT             A path to keep
+  -sc, --security_scope TEXT  A security_scope to keep
+  --help                      Show this message and exit.
+""",
+    ),
+]
 
 
-def test_validate_ok_file():
+@pytest.mark.parametrize("command,message", command_help_messages)
+def test_help_messages(command, message):
     runner = CliRunner()
-    swagger_path = SWAGGER_SAMPLES_PATH / "swagger_petstore.json"
-    result = runner.invoke(validate, [str(swagger_path)])
-
-    assert result.output == "The swagger is valid.\n"
+    result = runner.invoke(command, ["--help"])
+    print(result.output)
+    assert result.output == message
     assert result.exit_code == 0
 
 
-def test_validate_ok_url():
+command_ok_file = [
+    (validate, "The swagger is valid.", 0),
+    (prune, "The swagger had no unused elements.", 0),
+    (filter, "The swagger is unchanged after filtering.", 0),
+]
+swaggers = [
+    str(SWAGGER_SAMPLES_PATH / "swagger_petstore.json"),
+    "http://petstore.swagger.io/v2/swagger.json",
+]
+
+
+@pytest.mark.parametrize("command,ok_message,ok_exit_code", command_ok_file)
+@pytest.mark.parametrize("swagger", swaggers)
+def test_command_ok_file(command, ok_message, ok_exit_code, swagger):
     runner = CliRunner()
-    result = runner.invoke(validate, ["http://petstore.swagger.io/v2/swagger.json"])
+    result = runner.invoke(command, [swagger])
 
-    assert result.output == "The swagger is valid.\n"
-    assert result.exit_code == 0
+    assert result.output == f"{ok_message}\n"
+    assert result.exit_code == ok_exit_code
 
 
-def test_validate_nok_notexistant_url():
+def test_command_nok_notexistant_url():
     runner = CliRunner()
     result = runner.invoke(validate, ["http://petstore.swagger.io/v2/swagger.jso"])
 
@@ -109,7 +129,7 @@ def test_validate_nok_notexistant_url():
     assert result.exit_code == 1
 
 
-def test_validate_ok_stdin():
+def test_command_ok_stdin():
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
     result = runner.invoke(validate, ["-", "-v"], input=json.dumps(swagger))
@@ -118,7 +138,7 @@ def test_validate_ok_stdin():
     assert result.exit_code == 0
 
 
-def test_validate_nok_stdin_bad_json():
+def test_command_nok_stdin_bad_json():
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
     result = runner.invoke(validate, ["-"], input=json.dumps(swagger)[:-1])
@@ -130,7 +150,7 @@ def test_validate_nok_stdin_bad_json():
     assert result.exit_code == 1
 
 
-def test_validate_nok_stdin_bad_yaml():
+def test_command_nok_stdin_bad_yaml():
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
     result = runner.invoke(validate, ["-"], input=json.dumps(swagger)[1:])
@@ -142,39 +162,41 @@ def test_validate_nok_stdin_bad_yaml():
     assert result.exit_code == 1
 
 
-def test_validate_nok():
+@pytest.mark.parametrize("command", [prune])
+def test_command_invalid_swagger(command):
     runner = CliRunner()
     swagger_path = SWAGGER_SAMPLES_PATH / "swagger_petstore_with_errors.json"
-    result = runner.invoke(validate, [str(swagger_path)])
+    result = runner.invoke(command, [str(swagger_path)])
 
     assert result.output == (
-        "The swagger is not valid. Following 6 errors have been detected:\n"
-        "- Duplicate operationId @ 'paths./pet/findByStatus.get.operationId' "
-        "-> the operationId 'updatePet' is already used in an endpoint.\n"
-        "- Json schema validator error @ 'info' -> 'notvalidinfo' does not match any of the regexes: '^x-'\n"
-        "- Json schema validator error @ 'paths./pet.post' -> 'responses' is a required property\n"
-        "- Json schema validator error @ 'paths./pet/findByStatus.get.security.0.petstore_auth' -> 1 is not of type 'array'\n"
-        "- Json schema validator error @ 'schemes.1' -> 'ftp' is not one of ['http', 'https', 'ws', 'wss']\n"
-        "- Security scope not found @ 'paths./pet.put.security.[0].petstore_auth.think:pets' -> "
-        "scope think:pets is not declared in the scopes of the securityDefinitions 'petstore_auth'\n"
+        f"Failed to '{command.name}' the swagger as it is invalid. "
+        f"Please ensure the swagger is valid before rerunning '{command.name}'.\n"
+        f"You can check for validity with the 'validate' command.\n"
     )
     assert result.exit_code == 1
 
 
-def test_validate_nofile():
+@pytest.mark.parametrize("command", [prune, validate, filter])
+def test_command_nofile(command):
     runner = CliRunner()
-    result = runner.invoke(validate, [])
+    result = runner.invoke(command, [])
 
     assert result.exit_code == 2
+    assert 'Error: Missing argument "SWAGGER".\n' in result.output
 
 
 @pytest.mark.parametrize("verbose", [True, False])
-def test_prune_no_pruning_stdin(verbose):
+@pytest.mark.parametrize("silent", [True, False])
+def test_prune_no_pruning_stdin(verbose, silent):
     runner = CliRunner()
     swagger = dict(swagger="2.0", paths={}, info=dict(title="my API", version="v1.0"))
-    result = runner.invoke(prune, ["-"] + (["-v"] if verbose else []), input=json.dumps(swagger))
+    result = runner.invoke(
+        prune,
+        ["-"] + (["-s"] if silent else []) + (["-v"] if verbose else []),
+        input=json.dumps(swagger),
+    )
 
-    assert result.output == "The swagger had no unused elements.\n"
+    assert result.output == ("The swagger had no unused elements.\n" if not silent else "")
     assert result.exit_code == 0
 
 
@@ -205,8 +227,9 @@ def test_prune_nok_swagger_invalid():
     result = runner.invoke(prune, [str(swagger_path)])
 
     assert result.output == (
-        "The swagger could not been pruned as it is invalid. Please ensure the "
-        "swagger is valid before pruning it.\n"
+        "Failed to 'prune' the swagger as it is invalid. Please ensure the swagger is "
+        "valid before rerunning 'prune'.\n"
+        "You can check for validity with the 'validate' command.\n"
     )
     assert result.exit_code == 1
 
@@ -310,5 +333,5 @@ paths:
 """
         )
 
-    assert result.output == "The swagger has been filtered.\n"
+    assert result.output == "The swagger is unchanged after filtering.\n"
     assert result.exit_code == 0
