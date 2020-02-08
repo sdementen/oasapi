@@ -2,7 +2,8 @@
 Changelog
 =========
 
-(dev)
+0.1.15   (2020-02-08)
+---------------------
 
 * add filtering of swagger
 * support outputting swagger in yaml format
