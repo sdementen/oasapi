@@ -5,8 +5,8 @@ log_timer = logging.getLogger(f"{__name__}.timer")
 
 
 class Timer:
-    def __init__(self, name="anonymous code block"):
-        self.name = name
+    def __init__(self, name=None):
+        self.name = "<anonymous code block>" if name is None else name
 
     def __enter__(self):
         self.start = time.perf_counter()

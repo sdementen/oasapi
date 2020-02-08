@@ -79,7 +79,7 @@ class ReferenceNotFoundFilterError(FilterError):
 
 @dataclass(frozen=True)
 class PathsEmptyFilterError(FilterError):
-    type: str = "Paths are empty"
+    type: str = "Path is empty"
 
 
 @dataclass(frozen=True)
@@ -128,6 +128,16 @@ class TagFilteredOutFilterAction(FilterAction):
 @dataclass(frozen=True)
 class EndpointOutByTagFilterAction(FilterAction):
     type: str = "Endpoint filtered out by tag"
+
+
+@dataclass(frozen=True)
+class OperationRemovedFilterAction(FilterAction):
+    type: str = "Operation removed as no filter matched."
+
+
+@dataclass(frozen=True)
+class OperationChangedFilterAction(FilterAction):
+    type: str = "Operation was modified to match filters."
 
 
 @dataclass(frozen=True)

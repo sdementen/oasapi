@@ -4,13 +4,38 @@ import re
 # list of verbs that are valid in an OpenAPI/Swagger
 from functools import singledispatch
 
-from jsonpath_ng import Fields, Index, DatumInContext, Child
+from jsonpath_ng import Fields, Index, DatumInContext, Child, parse, Union
 
 OPERATIONS_LIST = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE", "HEAD"]
 OPERATIONS = set(OPERATIONS_LIST)
 OPERATIONS_LOWER = [op.lower() for op in OPERATIONS_LIST]  # ordered list of operations
 # regexp to match verbs
 OPERATIONS_RE = re.compile("|".join(OPERATIONS), re.IGNORECASE)
+
+REFERENCE_SECTIONS = ["definitions", "responses", "parameters"]
+
+# list of JSPATH for different structures
+JSPATH_ENDPOINTS = parse(f"paths.*")
+JSPATH_OPERATIONS = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)})")
+
+JSPATH_SECURITY_GLOBAL = parse("security.[*].*")
+JSPATH_SECURITY_OPERATION = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).security.[*].*")
+# print(JSPATH_OPERATIONS)
+# print(JSPATH_SECURITY_GLOBAL)
+# print(Child(JSPATH_OPERATIONS,JSPATH_SECURITY_GLOBAL))
+
+JSPATH_SECURITY = Union(JSPATH_SECURITY_GLOBAL, JSPATH_SECURITY_OPERATION)
+
+JSPATH_PARAMETERS_GLOBAL = parse("parameters.[*]")
+JSPATH_PARAMETERS_PATH = parse(f"paths.*.parameters.[*]")
+JSPATH_PARAMETERS_OPERATION = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).parameters.[*]")
+JSPATH_PARAMETERS = Union(
+    JSPATH_PARAMETERS_GLOBAL, Union(JSPATH_PARAMETERS_PATH, JSPATH_PARAMETERS_OPERATION)
+)
+JSPATH_PATHS_REFERENCES = parse("paths..'$ref'")
+JSPATH_REFERENCES = parse("$..'$ref'")
+JSPATH_OPERATIONID = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).operationId")
+JSPATH_COMPONENTS = parse(f"$.({'|'.join(REFERENCE_SECTIONS)}).*")
 
 logger = logging.getLogger(__file__)
 
@@ -69,4 +94,5 @@ def _(o):
         return ()
 
 
-REFERENCE_SECTIONS = ["definitions", "responses", "parameters"]
+JSPATH_TAGS = parse("tags.[*].name")
+JSPATH_OPERATION_TAGS = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).tags")

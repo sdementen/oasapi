@@ -7,12 +7,18 @@ import numbers
 import re
 from itertools import groupby
 from pathlib import Path
-from typing import Set, Dict
+from typing import Set, Dict, Tuple, List
 
-from jsonpath_ng import parse, Union
 from jsonschema import Draft4Validator
 
-from oasapi.common import get_elements, OPERATIONS_LOWER, REFERENCE_SECTIONS
+from oasapi.common import (
+    get_elements,
+    REFERENCE_SECTIONS,
+    JSPATH_SECURITY,
+    JSPATH_PARAMETERS,
+    JSPATH_REFERENCES,
+    JSPATH_OPERATIONID,
+)
 from .events import (
     ReferenceNotFoundValidationError,
     ParameterDefinitionValidationError,
@@ -37,9 +43,7 @@ def check_security(swagger: Dict):
 
     secdefs = swagger.get("securityDefinitions", {})
 
-    security_jspath = Union(
-        parse("security.[*].*"), parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).security.[*].*")
-    )
+    security_jspath = JSPATH_SECURITY
 
     for sec_key, scopes, path in get_elements(swagger, security_jspath):
         # retrieve security definition name from security declaration
@@ -206,15 +210,9 @@ def check_parameters(swagger: Dict):
     """
     events = set()
 
-    security_jspath = Union(
-        parse("parameters.[*]"),
-        Union(
-            parse(f"paths.*.parameters.[*]"),
-            parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).parameters.[*]"),
-        ),
-    )
+    parameters_jspath = JSPATH_PARAMETERS
 
-    for _, param, path in get_elements(swagger, security_jspath):
+    for _, param, path in get_elements(swagger, parameters_jspath):
         while True:
             events |= _check_parameter(param, path)
             if param.get("type") == "array":
@@ -238,7 +236,7 @@ def check_references(swagger: Dict):
     """
     events = set()
 
-    ref_jspath = parse("$..'$ref'")
+    ref_jspath = JSPATH_REFERENCES
 
     for _, reference, path in get_elements(swagger, ref_jspath):
         # handle only local references
@@ -280,7 +278,7 @@ def detect_duplicate_operationId(swagger: Dict):
     events = set()
 
     # retrieve all operationIds
-    operationId_jspath = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).operationId")
+    operationId_jspath = JSPATH_OPERATIONID
 
     def get_operationId_name(name_value_path):
         return name_value_path[1]
@@ -316,7 +314,7 @@ def check_schema(swagger: Dict) -> Set[ValidationError]:
     }
 
 
-def validate(swagger: Dict) -> Set[ValidationError]:
+def validate(swagger: Dict) -> Tuple[Dict, List[ValidationError]]:
     """
     Validate a swagger specification.
 
@@ -340,4 +338,4 @@ def validate(swagger: Dict) -> Set[ValidationError]:
         | detect_duplicate_operationId(swagger)
     )
 
-    return errors
+    return swagger, errors

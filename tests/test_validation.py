@@ -30,7 +30,7 @@ info:
 paths: {}
 """
     swagger = yaml.safe_load(swagger_str)
-    results = validate(swagger)
+    _, results = validate(swagger)
 
     # no error in this basic test
     assert results == set()
@@ -38,7 +38,7 @@ paths: {}
 
 def test_empty_swagger():
     """This is the minimal testing"""
-    results = validate({})
+    _, results = validate({})
 
     # no error in this basic test
     assert results == {
@@ -70,7 +70,7 @@ paths:
       - baz: "not-a-list"
 """
     swagger = yaml.safe_load(swagger_str)
-    results = validate(swagger)
+    _, results = validate(swagger)
 
     # no error in this basic test
     assert results == {
