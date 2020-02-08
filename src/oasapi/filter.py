@@ -41,10 +41,12 @@ def filter(
     Filter endpoints of a swagger specification.
 
     The endpoints can be filtered according to two modes:
+
     - keep_only: it will keep only the operations matching any of the conditions
     - remove: it will remove only the operations matching any of the conditions (TO BE IMPLEMENTED)
 
     The conditions parameter is a list of FilterCondition objects containing each:
+
     - tags: the operation is kept only if it has at least one tag in the tags
     - operations: the operation is kept only if its VERB + PATH matches at least one operation in the operations
     - security_scopes: the operation is kept only if it requires no security or if some of its security items only requires

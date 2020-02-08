@@ -2,6 +2,11 @@
 Changelog
 =========
 
+
+(dev)
+
+* add documentation of filter in prune + cleanup doc
+
 0.1.15   (2020-02-08)
 ---------------------
 

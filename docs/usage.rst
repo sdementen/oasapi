@@ -90,26 +90,6 @@ You can validate a document with the ``validate`` command:
    :returncode: 1
 
 
-Pruning an OAS 2.0 Document
----------------------------
-
-Pruning is an operation that will 'clean' the swagger by removing any unused elements:
-
- - global definitions not referenced
- - global parameters not referenced
- - global responses not referenced
- - securityDefinitions not used
- - securityDefinitions oauth2 scopes not used
- - tags not used
- - empty paths (endpoints with no verbs attached)
-
-You can prune a document with the ``prune`` command:
-
-.. command-output:: oasapi prune --help
-.. command-output:: oasapi prune samples/swagger_petstore.json
-.. command-output:: oasapi prune samples/swagger_petstore_unused_elements.json
-   :returncode: 1
-
 Filtering an OAS 2.0 Document
 -----------------------------
 
@@ -133,4 +113,28 @@ at the end an almost empty swagger.
 
 .. command-output:: oasapi filter samples/swagger_petstore.json -t weird -o - 2> filter_messages | oasapi prune - -o - 2> prune_messages
    :shell:
+
+The operation must match all the three different filter criteria (tags, security scopes and operations regexp) when given.
+If you want to apply more advanced filter (like "(tag='pet' AND security-scope='read:pets') or (tag='store')"), you can call the filter
+method directly from python and pass these filters (see :py:meth:`oasapi.filter`).
+
+Pruning an OAS 2.0 Document
+---------------------------
+
+Pruning is an operation that will 'clean' the swagger by removing any unused elements:
+
+ - global definitions not referenced
+ - global parameters not referenced
+ - global responses not referenced
+ - securityDefinitions not used
+ - securityDefinitions oauth2 scopes not used
+ - tags not used
+ - empty paths (endpoints with no verbs attached)
+
+You can prune a document with the ``prune`` command:
+
+.. command-output:: oasapi prune --help
+.. command-output:: oasapi prune samples/swagger_petstore.json
+.. command-output:: oasapi prune samples/swagger_petstore_unused_elements.json
+   :returncode: 1
 

@@ -133,6 +133,9 @@ def test_generate_filter_conditions_security():
     # operation is not secured (=open) so not filtered
     assert filter((), dict(tags=["tag2"]))
 
+    # operation is secured with a no scope sec
+    assert filter((), dict(security=[{"api_key": []}]))
+
     assert filter((), dict(security=[{"oauth": ["scope1"]}])) == {
         "security": [{"oauth": ["scope1"]}]
     }

@@ -82,7 +82,7 @@ Options:
                               stdout)
   -t, --tag TEXT              A tag to keep
   -p, --path TEXT             A path to keep
-  -sc, --security_scope TEXT  A security_scope to keep
+  -sc, --security-scope TEXT  A security scope to keep
   --help                      Show this message and exit.
 """,
     ),

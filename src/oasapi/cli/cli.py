@@ -67,7 +67,7 @@ commands = [
         extra_options=[
             click.option("-t", "--tag", help="A tag to keep", multiple=True),
             click.option("-p", "--path", help="A path to keep", multiple=True),
-            click.option("-sc", "--security_scope", help="A security_scope to keep", multiple=True),
+            click.option("-sc", "--security-scope", help="A security scope to keep", multiple=True),
         ],
         action_messages=(
             "The swagger has filtered or removed the following {len(actions)} operations:",

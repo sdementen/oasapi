@@ -104,10 +104,22 @@ You can also pipe a swagger to the command (if oasapi cannot retrieve the file b
     curl http://petstore.swagger.io/v2/swagger.json | oasapi validate -
     curl -s http://petstore.swagger.io/v2/swagger.json | docker run -i sdementen/oasapi validate -
 
+
+OAS Document filtering
+----------------------
+
+Similarly, you can use the filter command to filter an OAS 2.0 document and keep only specific operations.
+For instance, to keep only operations with the tag 'pet', the security scope at most 'read:pets' and the operations matching
+the regepx "(GET|PUT) .*petid.*" (all paths containing 'petid' with verb GET or PUT), run::
+
+    oasapi filter http://petstore.swagger.io/v2/swagger.json -o new_swagger.json --tag pet --security-scope read:pets --path "(GET|PUT) .*petid.*"
+
+(you will see that the new_swagger.json has only one operation left ``GET /pet/{petId}``).
+
 OAS Document pruning
 --------------------
 
-Similarly, you can use the pruning command to prune an OAS 2.0 document of its unused elements as::
+Similarly, you can use the prune command to prune an OAS 2.0 document of its unused elements as::
 
     oasapi prune http://petstore.swagger.io/v2/swagger.json -o new_swagger.json
 
