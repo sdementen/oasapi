@@ -119,7 +119,7 @@ the regepx "(GET|PUT) .*petid.*" (all paths containing 'petid' with verb GET or 
 OAS Document pruning
 --------------------
 
-Similarly, you can use the prune command to prune an OAS 2.0 document of its unused elements as::
+Another useful command is pruning, which takes an OAS 2.0 document and prune it of its unused elements as::
 
     oasapi prune http://petstore.swagger.io/v2/swagger.json -o new_swagger.json
 
