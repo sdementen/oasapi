@@ -76,7 +76,7 @@ commands = [
             click.option("-sc", "--security_scope", help="A security_scope to keep", multiple=True),
         ],
         action_messages=(
-            "The swagger has been filtered of the following {len(actions)} operations:",
+            "The swagger has filtered or removed the following {len(actions)} operations:",
             "The swagger is unchanged after filtering.",
         ),
         action_item="- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",

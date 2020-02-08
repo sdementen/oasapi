@@ -7,7 +7,7 @@ import deepmerge
 from attr import dataclass
 
 from oasapi.common import get_elements, JSPATH_OPERATIONS
-from oasapi.events import FilterAction
+from oasapi.events import FilterAction, OperationRemovedFilterAction, OperationChangedFilterAction
 
 
 @dataclass
@@ -86,14 +86,28 @@ def filter(
         for key, operation, path in get_elements(swagger, JSPATH_OPERATIONS)
     }
     # update the paths
+    actions = []
     paths = swagger["paths"]
-    for (_, path, verb), new_value in operations_to_keep.items():
+    for path, new_value in operations_to_keep.items():
+        (_, endpoint, verb) = path
         if new_value is not False:
-            paths[path][verb] = new_value
+            if paths[endpoint][verb] != new_value:
+                actions.append(
+                    OperationChangedFilterAction(
+                        path=path, reason="The operation has been modified by a filter."
+                    )
+                )
+                paths[endpoint][verb] = new_value
         else:
-            del paths[path][verb]
+            actions.append(
+                OperationRemovedFilterAction(
+                    path=path,
+                    reason="The operation has been removed as it does not match any filter.",
+                )
+            )
+            del paths[endpoint][verb]
 
-    return swagger, []
+    return swagger, actions
 
 
 def append_no_duplicate(config, path, base, nxt):

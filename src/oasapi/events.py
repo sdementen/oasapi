@@ -131,6 +131,16 @@ class EndpointOutByTagFilterAction(FilterAction):
 
 
 @dataclass(frozen=True)
+class OperationRemovedFilterAction(FilterAction):
+    type: str = "Operation removed as no filter matched."
+
+
+@dataclass(frozen=True)
+class OperationChangedFilterAction(FilterAction):
+    type: str = "Operation was modified to match filters."
+
+
+@dataclass(frozen=True)
 class BasePathEndpointConflictFilterWarning(FilterWarning):
     type: str = "New basePath incompatible with endpoint path"
 

@@ -333,5 +333,11 @@ paths:
 """
         )
 
-    assert result.output == "The swagger is unchanged after filtering.\n"
+    print(result.output)
+    assert (
+        result.output
+        == """The swagger has filtered or removed the following 1 operations:
+- Operation was modified to match filters. @ 'paths./foo.get' -> The operation has been modified by a filter.
+"""
+    )
     assert result.exit_code == 0

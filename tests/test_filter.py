@@ -3,6 +3,7 @@ import copy
 import pytest
 import yaml
 
+from oasapi.events import OperationChangedFilterAction, OperationRemovedFilterAction
 from oasapi.filter import filter, FilterCondition, resolve_security, generate_filter_conditions
 
 swagger_str = """
@@ -178,6 +179,33 @@ conditions = [
             "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
             "swagger": "2.0",
         },
+        [
+            OperationChangedFilterAction(
+                path=("paths", "/foo", "get"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "get"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "post"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "put"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "patch"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+        ],
     ),
     (
         [FilterCondition(tags=["tag2"])],
@@ -193,6 +221,38 @@ conditions = [
             "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
             "swagger": "2.0",
         },
+        [
+            OperationChangedFilterAction(
+                path=("paths", "/foo", "get"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "post"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "get"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "post"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "put"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "patch"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+        ],
     ),
     (
         [FilterCondition(security_scopes=["read"])],
@@ -209,6 +269,43 @@ conditions = [
             "security": [{"sec1": ["read"]}],
             "swagger": "2.0",
         },
+        [
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "get"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "post"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "patch"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "get"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "post"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "put"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "patch"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+        ],
     ),
     (
         [FilterCondition(security_scopes=["write", "read"])],
@@ -241,6 +338,28 @@ conditions = [
             "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
             "swagger": "2.0",
         },
+        [
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "post"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "post"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "put"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+            OperationChangedFilterAction(
+                path=("paths", "/foo/baz", "patch"),
+                reason="The operation has been modified by a filter.",
+                type="Operation was modified to match filters.",
+            ),
+        ],
     ),
     (
         [],
@@ -250,6 +369,43 @@ conditions = [
             "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
             "swagger": "2.0",
         },
+        [
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "get"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "post"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo", "patch"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "get"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "post"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "put"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "patch"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+        ],
     ),
     (
         None,
@@ -277,18 +433,19 @@ conditions = [
             "security": [{"sec1": ["read"]}, {"sec2": ["write"]}],
             "swagger": "2.0",
         },
+        [],
     ),
 ]
 
 
-@pytest.mark.parametrize("conditions,expected", conditions)
-def test_filtering_conditions(swagger, conditions, expected):
+@pytest.mark.parametrize("conditions,expected_swagger, expected_actions", conditions)
+def test_filtering_conditions(swagger, conditions, expected_swagger, expected_actions):
     swagger_filtered, actions = filter(swagger, mode="keep_only", conditions=conditions)
 
-    assert swagger_filtered == expected
+    assert swagger_filtered == expected_swagger
 
     # no error in this basic test
-    assert actions == []
+    assert actions == expected_actions
 
 
 @pytest.mark.parametrize("remove_global_security", [True, False])
@@ -325,7 +482,48 @@ def test_filtering_conditions_no_global_security(swagger, remove_global_security
     )
 
     # no error in this basic test
-    assert actions == []
+    assert actions == [
+        OperationRemovedFilterAction(
+            path=("paths", "/foo", "get"),
+            reason="The operation has been removed as it does not match any filter.",
+            type="Operation removed as no filter matched.",
+        ),
+        OperationRemovedFilterAction(
+            path=("paths", "/foo", "post"),
+            reason="The operation has been removed as it does not match any filter.",
+            type="Operation removed as no filter matched.",
+        ),
+        OperationRemovedFilterAction(
+            path=("paths", "/foo", "patch"),
+            reason="The operation has been removed as it does not match any filter.",
+            type="Operation removed as no filter matched.",
+        ),
+        OperationRemovedFilterAction(
+            path=("paths", "/foo/baz", "get"),
+            reason="The operation has been removed as it does not match any filter.",
+            type="Operation removed as no filter matched.",
+        ),
+    ] + (
+        [
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "post"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "put"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+            OperationRemovedFilterAction(
+                path=("paths", "/foo/baz", "patch"),
+                reason="The operation has been removed as it does not match any filter.",
+                type="Operation removed as no filter matched.",
+            ),
+        ]
+        if not remove_global_security
+        else []
+    )
 
 
 def test_filtering_mode():
