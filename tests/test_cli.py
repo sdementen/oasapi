@@ -44,7 +44,7 @@ Commands:
 Options:
   -v, --verbose          Make the operation more talkative
   -s, --silent           Do not print the oasapi messages to stderr
-  -o, --output FILENAME  Path to write the resulting swagger
+  -o, --output FILENAME  Path to write the resulting swagger ('-' for stdout)
   --help                 Show this message and exit.
 """,
     ),
@@ -61,7 +61,7 @@ Options:
 Options:
   -v, --verbose          Make the operation more talkative
   -s, --silent           Do not print the oasapi messages to stderr
-  -o, --output FILENAME  Path to write the resulting swagger
+  -o, --output FILENAME  Path to write the resulting swagger ('-' for stdout)
   --help                 Show this message and exit.
 """,
     ),
@@ -78,7 +78,8 @@ Options:
 Options:
   -v, --verbose               Make the operation more talkative
   -s, --silent                Do not print the oasapi messages to stderr
-  -o, --output FILENAME       Path to write the resulting swagger
+  -o, --output FILENAME       Path to write the resulting swagger ('-' for
+                              stdout)
   -t, --tag TEXT              A tag to keep
   -p, --path TEXT             A path to keep
   -sc, --security_scope TEXT  A security_scope to keep

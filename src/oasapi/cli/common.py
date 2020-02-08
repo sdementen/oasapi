@@ -13,8 +13,6 @@ from attr import dataclass
 class CliOasapiCommand:
     name: str
     command: Callable
-    has_input: bool
-    has_output: bool
     extra_options: List
     action_item: str
     description: str

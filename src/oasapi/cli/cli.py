@@ -30,8 +30,6 @@ commands = [
     CliOasapiCommand(
         name="prune",
         command=oasapi.prune,
-        has_input=True,
-        has_output=True,
         extra_options=[],
         action_messages=(
             "The swagger has been pruned of {len(actions)} elements:",
@@ -44,8 +42,6 @@ commands = [
     CliOasapiCommand(
         name="validate",
         command=oasapi.validate,
-        has_input=True,
-        has_output=True,
         extra_options=[],
         action_messages=(
             "The swagger is not valid. Following {len(actions)} errors have been detected:",
@@ -68,8 +64,6 @@ commands = [
                 )
             ],
         ),
-        has_input=True,
-        has_output=True,
         extra_options=[
             click.option("-t", "--tag", help="A tag to keep", multiple=True),
             click.option("-p", "--path", help="A path to keep", multiple=True),
@@ -101,7 +95,6 @@ def create_commands(commands: List[CliOasapiCommand]):
             action_message, noaction_message = command.action_messages
             action_exit_code, noaction_exit_code = command.action_results
 
-            assert command.has_input, "All commands should take an input"
             # extract input/output
             swagger = kwargs.pop("swagger").swagger
             output = kwargs.pop("output", None)
@@ -168,16 +161,15 @@ def create_commands(commands: List[CliOasapiCommand]):
         decorators.append(
             click.argument("swagger", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
         )
-        if command.has_output:
-            decorators.append(
-                click.option(
-                    "-o",
-                    "--output",
-                    help="Path to write the resulting swagger",
-                    type=click.File("w"),
-                    callback=validate_json_yaml_filename,
-                )
+        decorators.append(
+            click.option(
+                "-o",
+                "--output",
+                help="Path to write the resulting swagger ('-' for stdout)",
+                type=click.File("w"),
+                callback=validate_json_yaml_filename,
             )
+        )
         # add extra options
         decorators += command.extra_options
 

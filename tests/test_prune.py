@@ -115,9 +115,9 @@ def test_prune_unused_paths():
 
 
 def test_prune_unused_security_definitions_empty():
-    swagger = {"foo": "baz"}
+    swagger = {"foo": "baz", "securityDefinitions": {}}
     swagger_pruned, actions = prune_unused_security_definitions(copy.deepcopy(swagger))
-    assert swagger == swagger_pruned
+    assert swagger_pruned == {"foo": "baz"}
     assert not actions
 
 
