@@ -76,6 +76,22 @@ commands = [
         action_item="- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",
         description="Filter the SWAGGER operations based on tags, operation path or security scopes.",
     ),
+    CliOasapiCommand(
+        name="compare",
+        command=oasapi.compare,
+        extra_options=[
+            click.argument("swagger_new", callback=SwaggerFileURL.open_url, metavar="NEW_SWAGGER")
+        ],
+        action_messages=(
+            "The swagger has {len(actions)} changes in operations:",
+            "The swagger is not different from its base.",
+        ),
+        action_item="- {action.type} @ '{action.format_path(action.path)}' -> {action.reason}",
+        description="""Compare the NEW_SWAGGER to the SWAGGER for changes in operations, parameters, request/response schema and securities.
+
+            NEW_SWAGGER is the path to the swagger file, in json or yaml format.
+            It can be a file path, an URL or a dash (-) for the stdin""",
+    ),
 ]
 
 
@@ -96,7 +112,7 @@ def create_commands(commands: List[CliOasapiCommand]):
             action_exit_code, noaction_exit_code = command.action_results
 
             # extract input/output
-            swagger = kwargs.pop("swagger").swagger
+            swagger = kwargs.pop("swagger")
             output = kwargs.pop("output", None)
 
             secho = click.secho if not silent else lambda *args, **kwargs: None
@@ -153,23 +169,19 @@ def create_commands(commands: List[CliOasapiCommand]):
 
         decorators = [
             main.command(name=command.name),
+            click.argument("swagger", callback=SwaggerFileURL.open_url, metavar="SWAGGER"),
             click.option("-v", "--verbose", count=True, help="Make the operation more talkative"),
             click.option(
                 "-s", "--silent", is_flag=True, help="Do not print the oasapi messages to stderr"
             ),
-        ]
-        decorators.append(
-            click.argument("swagger", callback=SwaggerFileURL.open_url, metavar="SWAGGER")
-        )
-        decorators.append(
             click.option(
                 "-o",
                 "--output",
                 help="Path to write the resulting swagger ('-' for stdout)",
                 type=click.File("w"),
                 callback=validate_json_yaml_filename,
-            )
-        )
+            ),
+        ]
         # add extra options
         decorators += command.extra_options
 

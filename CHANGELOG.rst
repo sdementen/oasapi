@@ -2,6 +2,9 @@
 Changelog
 =========
 
+(dev)
+
+* add compare functionality
 
 0.1.16   (2020-02-08)
 ---------------------

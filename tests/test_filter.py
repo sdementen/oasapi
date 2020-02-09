@@ -77,7 +77,7 @@ def test_resolve_security_no_global_security(swagger):
 
 
 def test_generate_filter_conditions_simple():
-    filter = generate_filter_conditions([FilterCondition(tags=["tag1"])])
+    filter = generate_filter_conditions([FilterCondition(tags={"tag1"})])
 
     assert not filter((), {})
     assert not filter((), dict(tags=["tag2"]))
@@ -88,7 +88,7 @@ def test_generate_filter_conditions_simple():
 
 def test_generate_filter_conditions_two_no_merge():
     filter = generate_filter_conditions(
-        [FilterCondition(tags=["tag1"]), FilterCondition(tags=["tag2"])]
+        [FilterCondition(tags={"tag1"}), FilterCondition(tags={"tag2"})]
     )
     assert not filter((), {})
     assert not filter((), dict(tags=["tag3"]))
@@ -100,7 +100,7 @@ def test_generate_filter_conditions_two_no_merge():
 
 def test_generate_filter_conditions_two_with_merge():
     filter = generate_filter_conditions(
-        [FilterCondition(tags=["tag1"]), FilterCondition(tags=["tag2"])], merge_matches=True
+        [FilterCondition(tags={"tag1"}), FilterCondition(tags={"tag2"})], merge_matches=True
     )
     assert not filter((), {})
     assert not filter((), dict(tags=["tag3"]))
@@ -124,7 +124,8 @@ def test_generate_filter_conditions_operation():
 
 
 def test_generate_filter_conditions_security():
-    filter = generate_filter_conditions([FilterCondition(security_scopes=["scope1"])])
+    filter = generate_filter_conditions([FilterCondition(security_scopes={"scope1"})])
+
     assert not filter((), {})
     assert not filter((), dict(security=[{"oauth": ["scope2"]}]))
     assert not filter((), dict(security=[{"oauth": ["scope1", "scope2"]}]))
@@ -142,7 +143,7 @@ def test_generate_filter_conditions_security():
 
 
 def test_generate_filter_conditions_security_multi_scopes():
-    filter = generate_filter_conditions([FilterCondition(security_scopes=["scope1", "scope3"])])
+    filter = generate_filter_conditions([FilterCondition(security_scopes={"scope1", "scope3"})])
 
     assert not filter((), {})
     assert not filter((), dict(security=[{"oauth": ["scope2"]}]))
@@ -165,7 +166,7 @@ def test_generate_filter_conditions_security_multi_scopes():
 
 conditions = [
     (
-        [FilterCondition(tags=["tag2"]), FilterCondition(tags=["tag1"])],
+        [FilterCondition(tags={"tag2"}), FilterCondition(tags={"tag1"})],
         {
             "info": {"title": "my api", "version": "v1.0"},
             "paths": {
@@ -211,7 +212,7 @@ conditions = [
         ],
     ),
     (
-        [FilterCondition(tags=["tag2"])],
+        [FilterCondition(tags={"tag2"})],
         {
             "info": {"title": "my api", "version": "v1.0"},
             "paths": {
@@ -258,7 +259,7 @@ conditions = [
         ],
     ),
     (
-        [FilterCondition(security_scopes=["read"])],
+        [FilterCondition(security_scopes={"read"})],
         {
             "info": {"title": "my api", "version": "v1.0"},
             "paths": {
@@ -311,7 +312,7 @@ conditions = [
         ],
     ),
     (
-        [FilterCondition(security_scopes=["write", "read"])],
+        [FilterCondition(security_scopes={"write", "read"})],
         {
             "info": {"title": "my api", "version": "v1.0"},
             "paths": {
@@ -460,7 +461,7 @@ def test_filtering_conditions_no_global_security(swagger, remove_global_security
     swagger_filtered, actions = filter(
         swagger,
         mode="keep_only",
-        conditions=[FilterCondition(security_scopes=["inexisting-scope"])],
+        conditions=[FilterCondition(security_scopes={"inexisting-scope"})],
     )
 
     assert swagger_filtered == (

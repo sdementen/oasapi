@@ -5,7 +5,7 @@ import pytest
 from click.testing import CliRunner
 from test_common import SWAGGER_SAMPLES_PATH
 
-from oasapi.cli import main, validate, prune, filter
+from oasapi.cli import main, validate, prune, filter, compare
 from oasapi.cli.common import shorten_text
 
 
@@ -27,6 +27,7 @@ Options:
   --help  Show this message and exit.
 
 Commands:
+  compare   Compare the NEW_SWAGGER to the SWAGGER for changes in operations,...
   filter    Filter the SWAGGER operations based on tags, operation path or...
   prune     Prune from the SWAGGER unused global...
   validate  Validate the SWAGGER according to the specs.
@@ -86,6 +87,7 @@ Options:
   --help                      Show this message and exit.
 """,
     ),
+    (compare, ""),
 ]
 
 

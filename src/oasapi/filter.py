@@ -1,13 +1,14 @@
 import copy
 import re
 from functools import reduce
-from typing import Dict, Tuple, List, Set
+from typing import Dict, Tuple, List, Set, Callable, Union, Optional
 
 import deepmerge
 from attr import dataclass
 
-from oasapi.common import get_elements, JSPATH_OPERATIONS
+from oasapi.common import get_elements
 from oasapi.events import FilterAction, OperationRemovedFilterAction, OperationChangedFilterAction
+from oasapi.jspaths import JSPATH_OPERATIONS
 
 
 @dataclass
@@ -138,7 +139,9 @@ m = deepmerge.Merger(
 
 def generate_filter_conditions(
     conditions: List[FilterCondition], merge_matches=False, global_security=None
-):
+) -> Callable[
+    [Tuple[str, ...], Dict, Optional[bool], Optional[bool], Optional[bool]], Union[bool, dict]
+]:
     """Return a function:
      - taking an operation (as a dict) as well as three flags:
         - on_tags (default = True)
@@ -176,7 +179,13 @@ def generate_filter_conditions(
 
         The condition is a dict with keys tags, operations, security_scopes"""
 
-        def filter(path: Tuple, operation: Dict, on_tags, on_security_scopes, on_operations):
+        def filter(
+            path: Tuple,
+            operation: Dict,
+            on_tags: bool,
+            on_security_scopes: bool,
+            on_operations: bool,
+        ):
             # deep copy the operation as it will be changed
             operation = copy.deepcopy(operation)
 
@@ -254,12 +263,12 @@ def generate_filter_conditions(
     _filters = [generate_filter(condition) for condition in conditions]
 
     def filter_all(
-        path,
-        operation,
+        path: Tuple[str, ...],
+        operation: Dict,
         *,
-        on_tags=on_tags_useful,
-        on_security_scopes=on_security_scopes_useful,
-        on_operations=on_operations_useful,
+        on_tags: bool = on_tags_useful,
+        on_security_scopes: bool = on_security_scopes_useful,
+        on_operations: bool = on_operations_useful,
     ):
         # check a operation to see if match any of the filter
         # first trueish filter returned if not merge_matches

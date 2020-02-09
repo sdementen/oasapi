@@ -138,3 +138,21 @@ You can prune a document with the ``prune`` command:
 .. command-output:: oasapi prune samples/swagger_petstore_unused_elements.json
    :returncode: 1
 
+Comparing two OAS 2.0 Documents
+-------------------------------
+
+Comparing two version of a swagger can be very helpful to build a changelog, check for backward incompatible changes,
+ prepare communications to API consumers.
+The compare operation will check specifically for operations:
+
+ - added/removed(previously deprecated or not)/deprecated
+ - with changes in parameters
+ - with changes in request/response schema
+ - with changes in securities
+
+You can compare two document with the ``compare`` command:
+
+.. command-output:: oasapi compare --help
+.. command-output:: oasapi compare samples/swagger_petstore.yaml samples/swagger_petstore_with_changes.yaml
+   :returncode: 1
+

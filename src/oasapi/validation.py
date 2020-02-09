@@ -11,14 +11,8 @@ from typing import Set, Dict, Tuple, List
 
 from jsonschema import Draft4Validator
 
-from oasapi.common import (
-    get_elements,
-    REFERENCE_SECTIONS,
-    JSPATH_SECURITY,
-    JSPATH_PARAMETERS,
-    JSPATH_REFERENCES,
-    JSPATH_OPERATIONID,
-)
+from oasapi.common import get_elements, REFERENCE_SECTIONS
+from oasapi.jspaths import JSPATH_SECURITY, JSPATH_PARAMETERS, JSPATH_REFERENCES, JSPATH_OPERATIONID
 from .events import (
     ReferenceNotFoundValidationError,
     ParameterDefinitionValidationError,

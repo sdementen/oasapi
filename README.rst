@@ -64,7 +64,7 @@ Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling y
  - validate an OAS 2.0 document
  - prune an OAS 2.0 document of its unused elements
  - filter endpoints of an OAS 2.0 document to generate a subset of the API
- - [todo] control backward compatibility between two OAS 2.0 documents
+ - [wip] control backward compatibility between two OAS 2.0 documents
  - [todo] rewrite the basePath and paths of an OAS 2.0 document
  - [todo] add/remove securityDefinitions on an OAS 2.0 document
 

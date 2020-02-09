@@ -78,7 +78,7 @@ class ReferenceNotFoundFilterError(FilterError):
 
 
 @dataclass(frozen=True)
-class PathsEmptyFilterError(FilterError):
+class PathsEmptyFilterAction(FilterError):
     type: str = "Path is empty"
 
 
@@ -230,3 +230,38 @@ class JsonSchemaValidationError(ValidationError):
 class BasePathValidationAction(ValidationAction):
     old_path: str
     new_path: str
+
+
+@dataclass(frozen=True)
+class DiffAction(Action):
+    pass
+
+
+@dataclass(frozen=True)
+class AddedOperationDiffAction(Action):
+    type: str = "Operation added"
+
+
+@dataclass(frozen=True)
+class DeprecatedOperationDiffAction(Action):
+    type: str = "Operation deprecated"
+
+
+@dataclass(frozen=True)
+class RemovedDeprecatedOperationDiffAction(Action):
+    type: str = "Deprecated operation removed"
+
+
+@dataclass(frozen=True)
+class RemovedNotDeprecatedOperationDiffAction(Action):
+    type: str = "Not deprecated operation removed"
+
+
+@dataclass(frozen=True)
+class ChangeRequestDiffAction(Action):
+    pass
+
+
+@dataclass(frozen=True)
+class ChangeResponseDiffAction(Action):
+    pass

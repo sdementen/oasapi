@@ -3,16 +3,15 @@ import itertools
 from collections import defaultdict
 from typing import Dict, Tuple, List
 
-from oasapi.common import (
-    get_elements,
-    REFERENCE_SECTIONS,
+from oasapi.common import get_elements, REFERENCE_SECTIONS
+from oasapi.jspaths import (
+    JSPATH_ENDPOINTS,
+    JSPATH_SECURITY,
     JSPATH_PATHS_REFERENCES,
     JSPATH_REFERENCES,
     JSPATH_COMPONENTS,
     JSPATH_TAGS,
     JSPATH_OPERATION_TAGS,
-    JSPATH_SECURITY,
-    JSPATH_ENDPOINTS,
 )
 from oasapi.events import (
     ReferenceNotUsedFilterAction,
@@ -20,7 +19,7 @@ from oasapi.events import (
     OAuth2ScopeNotUsedFilterAction,
     TagNotUsedFilterAction,
     FilterAction,
-    PathsEmptyFilterError,
+    PathsEmptyFilterAction,
 )
 
 
@@ -150,7 +149,7 @@ def prune_empty_paths(swagger):
             del swagger["paths"][endpoint_name]
 
             actions.append(
-                PathsEmptyFilterError(
+                PathsEmptyFilterAction(
                     path=path, reason=f"path '{endpoint_name}' has no operations defined"
                 )
             )

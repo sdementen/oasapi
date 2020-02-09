@@ -93,7 +93,8 @@ class SwaggerFileURL(FileURL):
                 f"with content {shorten_text(file_url.content, 15, 10)}"
             )
 
-        return cls(swagger=swagger, url=file_url.url, content=file_url.content)
+        return swagger
+        # cls(swagger=swagger, url=file_url.url, content=file_url.content)
 
 
 def validate_json_yaml_filename(ctx, param, value):

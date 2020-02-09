@@ -7,7 +7,7 @@ from oasapi.events import (
     OAuth2ScopeNotUsedFilterAction,
     SecurityDefinitionNotUsedFilterAction,
     TagNotUsedFilterAction,
-    PathsEmptyFilterError,
+    PathsEmptyFilterAction,
 )
 from oasapi.prune import (
     prune_unused_global_items,
@@ -96,12 +96,12 @@ def test_prune_unused_paths():
     swagger, actions = prune_empty_paths(swagger)
 
     assert actions == [
-        PathsEmptyFilterError(
+        PathsEmptyFilterAction(
             path=("paths", "/foo"),
             reason="path '/foo' has no operations defined",
             type="Path is empty",
         ),
-        PathsEmptyFilterError(
+        PathsEmptyFilterAction(
             path=("paths", "/baz"),
             reason="path '/baz' has no operations defined",
             type="Path is empty",

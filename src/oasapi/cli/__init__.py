@@ -1,3 +1,3 @@
-from .cli import main, validate, prune, filter
+from .cli import main, validate, prune, filter, compare
 
-__all__ = ["main", "validate", "prune", "filter"]
+__all__ = ["main", "validate", "prune", "filter", "compare"]
