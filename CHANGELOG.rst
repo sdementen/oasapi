@@ -3,7 +3,8 @@ Changelog
 =========
 
 
-(dev)
+0.1.17   (2020-03-03)
+---------------------
 
 * fix integer response code raising exception (closes #14)
 

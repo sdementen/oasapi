@@ -51,9 +51,9 @@ Overview
     :alt: Supported implementations
     :target: https://pypi.org/project/oasapi
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/sdementen/oasapi/0.1.16.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/sdementen/oasapi/0.1.17.svg
     :alt: Commits since latest release
-    :target: https://github.com/sdementen/oasapi/compare/0.1.16...master
+    :target: https://github.com/sdementen/oasapi/compare/0.1.17...master
 
 
 
