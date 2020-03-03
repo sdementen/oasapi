@@ -3,8 +3,7 @@ Changelog
 =========
 
 
-dev
----
+(dev)
 
 * fix integer response code raising exception (closes #14)
 
