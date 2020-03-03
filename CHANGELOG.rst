@@ -3,6 +3,11 @@ Changelog
 =========
 
 
+dev
+---
+
+* fix integer response code raising exception (closes #14)
+
 0.1.16   (2020-02-08)
 ---------------------
 

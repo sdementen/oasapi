@@ -130,6 +130,39 @@ paths:
     }
 
 
+def test_check_schema_integer_as_response_code():
+    swagger_str = """
+swagger: '2.0'
+info:
+  version: 1.0
+  title: my api
+paths:
+  /foo:
+    get:
+      responses:
+        200:
+          $ref: "#/definitions/some-definition"
+      security:
+      - baz: "not-a-list"
+    """
+    swagger = yaml.safe_load(swagger_str)
+    results = check_schema(swagger)
+
+    # no error in this basic test
+    assert results == {
+        JsonSchemaValidationError(
+            path=("info", "version"),
+            reason="1.0 is not of type 'string'",
+            type="Json schema validator error",
+        ),
+        JsonSchemaValidationError(
+            path=("paths", "/foo", "get", "security", 0, "baz"),
+            reason="'not-a-list' is not of type 'array'",
+            type="Json schema validator error",
+        ),
+    }
+
+
 def test_check_references():
     swagger_str = """
 swagger: '2.0'

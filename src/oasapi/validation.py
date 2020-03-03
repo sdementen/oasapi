@@ -11,13 +11,13 @@ from typing import Set, Dict, Tuple, List
 
 from jsonschema import Draft4Validator
 
-from oasapi.common import (
-    get_elements,
-    REFERENCE_SECTIONS,
+from oasapi.common import get_elements, REFERENCE_SECTIONS
+from oasapi.jspaths import (
     JSPATH_SECURITY,
     JSPATH_PARAMETERS,
     JSPATH_REFERENCES,
     JSPATH_OPERATIONID,
+    JSPATH_OPERATION_RESPONSES,
 )
 from .events import (
     ReferenceNotFoundValidationError,
@@ -307,6 +307,12 @@ def check_schema(swagger: Dict) -> Set[ValidationError]:
     # validate the json schema of the swagger_lib
     schema = json.load((Path(__file__).parent / "schemas" / "schema_swagger.json").open())
     v = Draft4Validator(schema)
+
+    # convert any key to string (as json swagger expects all keys to be str and response code are sometimes integer)
+    for name, value, path in get_elements(swagger, JSPATH_OPERATION_RESPONSES):
+        for k in list(value.keys()):
+            if isinstance(k, int):
+                value[str(k)] = value.pop(k)
 
     return {
         JsonSchemaValidationError(path=tuple(error.absolute_path), reason=error.message)
