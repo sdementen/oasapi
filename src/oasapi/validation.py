@@ -97,7 +97,7 @@ def _check_parameter(param: Dict, path_param):
         events.add(
             ParameterDefinitionValidationError(
                 path=path_param,
-                reason=f"The parameter is required yet it has a default value",
+                reason="The parameter is required yet it has a default value",
                 parameter_name=name,
             )
         )
@@ -107,7 +107,7 @@ def _check_parameter(param: Dict, path_param):
         events.add(
             ParameterDefinitionValidationError(
                 path=path_param,
-                reason=f"The parameter is of type 'array' but is missing an 'items' field",
+                reason="The parameter is of type 'array' but is missing an 'items' field",
                 parameter_name=name,
             )
         )

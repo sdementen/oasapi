@@ -15,7 +15,7 @@ OPERATIONS_RE = re.compile("|".join(OPERATIONS), re.IGNORECASE)
 REFERENCE_SECTIONS = ["definitions", "responses", "parameters"]
 
 # list of JSPATH for different structures
-JSPATH_ENDPOINTS = parse(f"paths.*")
+JSPATH_ENDPOINTS = parse("paths.*")
 JSPATH_OPERATIONS = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)})")
 
 JSPATH_SECURITY_GLOBAL = parse("security.[*].*")
@@ -27,7 +27,7 @@ JSPATH_SECURITY_OPERATION = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).secur
 JSPATH_SECURITY = Union(JSPATH_SECURITY_GLOBAL, JSPATH_SECURITY_OPERATION)
 
 JSPATH_PARAMETERS_GLOBAL = parse("parameters.[*]")
-JSPATH_PARAMETERS_PATH = parse(f"paths.*.parameters.[*]")
+JSPATH_PARAMETERS_PATH = parse("paths.*.parameters.[*]")
 JSPATH_PARAMETERS_OPERATION = parse(f"paths.*.({'|'.join(OPERATIONS_LOWER)}).parameters.[*]")
 JSPATH_PARAMETERS = Union(
     JSPATH_PARAMETERS_GLOBAL, Union(JSPATH_PARAMETERS_PATH, JSPATH_PARAMETERS_OPERATION)

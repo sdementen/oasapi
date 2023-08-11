@@ -22,7 +22,7 @@ def read(*names, **kwargs):
 
 setup(
     name="oasapi",
-    version="0.1.17",
+    version="0.1.18",
     license="BSD-3-Clause",
     description="Python library for Web APIs leveraging OpenAPI/Swagger specification",
     long_description="%s\n%s"
@@ -67,7 +67,7 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    python_requires=">=3.6.*",
+    python_requires=">=3.6",
     install_requires=["click", "jsonschema", "pyyaml", "jsonpath-ng", "deepmerge"],
     extras_require={
         # eg:

@@ -10,7 +10,7 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - | |travis| |appveyor| |requires|
+      - | |travis| |appveyor|
         | |codecov|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
@@ -19,17 +19,13 @@ Overview
     :target: https://readthedocs.org/projects/oasapi
     :alt: Documentation Status
 
-.. |travis| image:: https://api.travis-ci.org/sdementen/oasapi.svg?branch=master
+.. |travis| image:: https://api.travis-ci.com/sdementen/oasapi.svg?branch=master
     :alt: Travis-CI Build Status
     :target: https://travis-ci.org/sdementen/oasapi
 
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/sdementen/oasapi?branch=master&svg=true
     :alt: AppVeyor Build Status
     :target: https://ci.appveyor.com/project/sdementen/oasapi
-
-.. |requires| image:: https://requires.io/github/sdementen/oasapi/requirements.svg?branch=master
-    :alt: Requirements Status
-    :target: https://requires.io/github/sdementen/oasapi/requirements/?branch=master
 
 .. |codecov| image:: https://codecov.io/github/sdementen/oasapi/coverage.svg?branch=master
     :alt: Coverage Status
@@ -69,7 +65,7 @@ Python library for Web APIs leveraging OpenAPI/Swagger specification, enabling y
  - [todo] rate/score quality of an OAS 2.0 document (documentation coverage, good practices,...)
  - [todo] transform an OAS 2.0 document (add x-... items, rename paths, rewrite basePath, ...)
  - [todo] add/remove securityDefinitions on an OAS 2.0 document
- 
+
 
 Free software license: BSD 3-Clause License
 
